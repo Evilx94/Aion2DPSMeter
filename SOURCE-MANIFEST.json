@@ -1,0 +1,318 @@
+[
+  {
+    "path": ".gitignore",
+    "sha256": "c8fa20cf951198600ea394bb2974f43bb402bd6e17071b29dd4535a0c52ba845"
+  },
+  {
+    "path": "docs/CATALOG.md",
+    "sha256": "650e95f8a903c07d30d414279efb1b901649c6aff6750e1ff7e5b05386116b46"
+  },
+  {
+    "path": "docs/PROVENANCE.md",
+    "sha256": "6379d53737d8572cc5a41d79917247c08ae117fb139a9f89a2d24a9fbee62e50"
+  },
+  {
+    "path": "LICENSE-STATUS.md",
+    "sha256": "0f102be9af6072cee716860326f0af6866ab651bdb188cbb8e5f00a6b28396b7"
+  },
+  {
+    "path": "licenses/REFERENCE-LICENSE.txt",
+    "sha256": "643d62995e5ea9d6ab5c05bc84597e0ad607bb113cb3eb97c34dbc9b565f4304"
+  },
+  {
+    "path": "licenses/REFERENCE-NOTICE.md",
+    "sha256": "cb0a19bf55635bb7addc4ce9ae1a47b2fd07026ab0316aa862aaacf6d0d03f4a"
+  },
+  {
+    "path": "meter/__init__.py",
+    "sha256": "d1bc3d6c76eb262f1868d955cd3d1a5c703f492f32b7e96961af9a998306e061"
+  },
+  {
+    "path": "meter/__main__.py",
+    "sha256": "421c7de2cc54535b311d34f364a2fa5ad98f1105dba3fec317faa12e569ed0c7"
+  },
+  {
+    "path": "meter/appearance.py",
+    "sha256": "e66067fd020dbb082ab2e5bd7b0a9885d8dac49934a2ec58ba267eada5225e06"
+  },
+  {
+    "path": "meter/appearance_editor.py",
+    "sha256": "e067d4fbe2e2f451c5e934cca878d2054f4fb0471bbc84b27bf7450d08f46836"
+  },
+  {
+    "path": "meter/background.py",
+    "sha256": "01a34e128cb839727a826ac96f1ed1dd35d5779805163d7f031f851ecc96dd3a"
+  },
+  {
+    "path": "meter/catalog_store.py",
+    "sha256": "0729e134f3364f88b8eb756876193fc78335cc6a67bad56ee462992506793b35"
+  },
+  {
+    "path": "meter/chat_export.py",
+    "sha256": "b7b261ab4ab0587b0619fc9bc2290defd7eab9967da0fe61de0519f4fd6ab7a2"
+  },
+  {
+    "path": "meter/class_icons.py",
+    "sha256": "d5f90c1eb5904ff3c3430624903e96fc8a774100f0afe44878fea0a16799a5eb"
+  },
+  {
+    "path": "meter/clock_zones.py",
+    "sha256": "0b967e8284bc4df512bc28d46c4833939e6b97feff758df3f249ea68de8de8c6"
+  },
+  {
+    "path": "meter/combat_logs.py",
+    "sha256": "7d2fc10330a586011dfee35a7a90b0277f05d5d4c5da2e84b0b281bf540fd090"
+  },
+  {
+    "path": "meter/comparison.py",
+    "sha256": "745b5a56599b565e13226ebcbe2f3fd018b633b81cf77b01c045d7df573e7f98"
+  },
+  {
+    "path": "meter/core/__init__.py",
+    "sha256": "9a771e71da70c0378617e7f37e3b8321591765ce085db078adab9dd37c163fb0"
+  },
+  {
+    "path": "meter/core/activity.py",
+    "sha256": "d4413285f4c2ac2b9c05b0270a9709de22c5bb7f0bad6f76bc7920bb7fb5cce6"
+  },
+  {
+    "path": "meter/core/binary.py",
+    "sha256": "6bf4ab58958822662115b4ab12917c358669067e1fbfdfec5b5dd9e4baea5cdb"
+  },
+  {
+    "path": "meter/core/combat.py",
+    "sha256": "57e3ebf1ba48b7518ce993934411795dddaa860bf8c4588bc2495e0956e72f66"
+  },
+  {
+    "path": "meter/core/damage.py",
+    "sha256": "e939384819c754e91b08b1e5e70c34a62af489aa5e668c6326a929b7085f57fe"
+  },
+  {
+    "path": "meter/core/damage_sections.py",
+    "sha256": "761751e93567abb6987a71b39c49b3b39e43b32f40c6cd31f2319d05a5438634"
+  },
+  {
+    "path": "meter/core/encounters.py",
+    "sha256": "51a911246a3241f8df2e470cf02cc241034ba07e827e89ff4a8a6231bc9cca7a"
+  },
+  {
+    "path": "meter/core/entities.py",
+    "sha256": "5b0824921bbdec02baaf28a0d5322417dd96170c66178cb619a6ad5d91f2c711"
+  },
+  {
+    "path": "meter/core/framing.py",
+    "sha256": "3a48730c37a6a27276e35ebab67c1cb7bc723820dd735fdd68d5190e9e680b8f"
+  },
+  {
+    "path": "meter/core/local_identity.py",
+    "sha256": "dd54005f3443bc8a485c9c96032b36bf2448eac4b21552eb1e88d7fd8efb65a0"
+  },
+  {
+    "path": "meter/core/login_group.py",
+    "sha256": "fc1d1c3079f643fa016057ad258f303f910c2cc15c770b5c721a5be86be970d4"
+  },
+  {
+    "path": "meter/core/network.py",
+    "sha256": "7b7d837e32f9ff141f1467a85fb44b954a820d9b98ebc9b2e35f16c5ec09e49a"
+  },
+  {
+    "path": "meter/core/npc_policy.py",
+    "sha256": "33a5a4997964904946cd1d6d9a0d8d44bd28dfcfd56756e8e68a283ac374d33d"
+  },
+  {
+    "path": "meter/core/parser.py",
+    "sha256": "351ef1a7b332840cf1e3d9261e3e1d77ebce7061b0916663b2d5dad72b62e22f"
+  },
+  {
+    "path": "meter/core/pcap.py",
+    "sha256": "4281b6d332392acfb0be81eab0c8b626d737b3409b324ba4ddde758cd826370d"
+  },
+  {
+    "path": "meter/core/scapy_capture.py",
+    "sha256": "a1803b9d607d9fc171282c0881bfe9f81869dbdfb2832d15ed44cc89d9176472"
+  },
+  {
+    "path": "meter/core/session.py",
+    "sha256": "81dd550e7ad85b95dc8d4a96f9cbdabab3eeccce17a79e257cc507ec0a29283a"
+  },
+  {
+    "path": "meter/core/skill_labels.py",
+    "sha256": "b61ac2e2ea67fea3ec5e4da2af0313caab1a5341266de71e57b034e361e6b42f"
+  },
+  {
+    "path": "meter/core/skill_observations.py",
+    "sha256": "7beae1ea4a628485dfdac62808eec4ca37ac63781f945f1629526c01a98fe373"
+  },
+  {
+    "path": "meter/core/skill_policy.py",
+    "sha256": "72ca82b65cdfd915cd3c41b1ce5d0d18d541fc7a0e6d7b8624c80f73515b5e27"
+  },
+  {
+    "path": "meter/core/state.py",
+    "sha256": "6a04288e0aca1b603361de4e5bbf6dd180922b2e4831c373084f9b96b5ed6128"
+  },
+  {
+    "path": "meter/core/summons.py",
+    "sha256": "561988d133547572a6877f414041d1494b7f55f910914f8b20b7d05957ff1f9b"
+  },
+  {
+    "path": "meter/core/transport.py",
+    "sha256": "f489c0c81c36a9173cf4972991de851805737df1de8c1a1486da56a96312af10"
+  },
+  {
+    "path": "meter/dashboard.py",
+    "sha256": "4f0e9b40f94f8574204d1941a420ca27c2bad3ad8af4fb4510a9e1a1d2c5194c"
+  },
+  {
+    "path": "meter/data/buff_labels.json",
+    "sha256": "048457b3744a7318b6dbfa46cf9af8947cf89d987925d534b032ff2c2cc86fc6"
+  },
+  {
+    "path": "meter/data/dungeon_labels.json",
+    "sha256": "a45dd4a7b887b6ef12dcc819bb80f5b837200a9f10c58e70039f286297437601"
+  },
+  {
+    "path": "meter/data/npc_labels.json",
+    "sha256": "5178200522baf5673d0aeedbe1659afffba65d0c0004485cdd5d19422d7a7c70"
+  },
+  {
+    "path": "meter/data/periodic_skills.json",
+    "sha256": "510818b8d4c2a7a7fd1cdb45d44438ddab236542e88e43c0c758feda15225e5d"
+  },
+  {
+    "path": "meter/data/pets.json",
+    "sha256": "fd807787aff90f3051e5a51a61d55200473114dc9e224f2369d3bc0d44210e05"
+  },
+  {
+    "path": "meter/data/skill_labels.json",
+    "sha256": "974817435d573e6ac4cc1320a62a014796ff85eeb3a207dcdec05b12727397db"
+  },
+  {
+    "path": "meter/data/ui_en.json",
+    "sha256": "634c7c7337ef6946da681a3c5242f39ccfadf176a0e39d0bcc380f199bc7d867"
+  },
+  {
+    "path": "meter/details.py",
+    "sha256": "a62c5fa811e34aefd1ea20ef1df2d084f353804d937ea94c266c6d4c6da82668"
+  },
+  {
+    "path": "meter/diagnostics.py",
+    "sha256": "96ffd7f0c24218496e9210b81ec548341ec2bac65997e527bd82e1a2c7be5b2f"
+  },
+  {
+    "path": "meter/dungeon_export.py",
+    "sha256": "3ae3ef59f41e46d338c47c03dd0c4b9d5eff8447ade8e1e8930bd47fb49eafc7"
+  },
+  {
+    "path": "meter/encounter_history.py",
+    "sha256": "6751e99f62f3e79c986ec7aa909960992047ff3850422739e77163e5ba87d360"
+  },
+  {
+    "path": "meter/encounter_scope.py",
+    "sha256": "4e7051acd2067e076ded3f5fea61b520b972ee6cb634d3ead54436b22e306917"
+  },
+  {
+    "path": "meter/equipment.py",
+    "sha256": "67ceb030a511fa0f09cfeec14e3244aebc9b5983078cde258dd4d427e9f567c6"
+  },
+  {
+    "path": "meter/event_overlay.py",
+    "sha256": "0878cbd42837bec63871edc1bc456f1b1bad1472323b89740911d5be90082acc"
+  },
+  {
+    "path": "meter/events.py",
+    "sha256": "5ec7756798f63a259ea188d8e3bb64754254f99845bb2b13d390c4ad5f8fa4c4"
+  },
+  {
+    "path": "meter/export_job.py",
+    "sha256": "c9311476e1386e2c0199fe42b3932e94faefa967665b040665fcc9f3a5131002"
+  },
+  {
+    "path": "meter/game_window.py",
+    "sha256": "28451ee6658555de51d720e93e4b7fe43fb6bba13d2288819a547a7616131ebf"
+  },
+  {
+    "path": "meter/healing.py",
+    "sha256": "c2728e25a8cc714b7cd8397374a311017e831a71642a453373bc7ecd4ed3b3f0"
+  },
+  {
+    "path": "meter/interfaces.py",
+    "sha256": "db0afa9dd038ed196317f0f84323ee9cdaac764b8834cbce98f7178b0c6e3417"
+  },
+  {
+    "path": "meter/language.py",
+    "sha256": "16a6d8e48f8a3ac6d73bfc4f22919de1109bc48eb5e5605b1caec98e567a4047"
+  },
+  {
+    "path": "meter/log_browser.py",
+    "sha256": "e83c56b5b6889fb36af92adcc81f1ecb8341ca83730a055552fa76eee7956298"
+  },
+  {
+    "path": "meter/log_management.py",
+    "sha256": "29a95cf01e9f39d1e783653c129ee20b6c33b694cb9c21d7b6b92d5234e324be"
+  },
+  {
+    "path": "meter/metrics.py",
+    "sha256": "c38b8ef5f8984a5fd3eb78ea1a575636d32f1bece3bcc1cf48700b0b337bf86c"
+  },
+  {
+    "path": "meter/overlay.py",
+    "sha256": "f00bf5edbe8010e3b34d94e5dbe4d702a8bb1f603eb3f200af0994cd3491d880"
+  },
+  {
+    "path": "meter/pets.py",
+    "sha256": "c91a709f897e4e71138d2e14ad7711facbf7ce4531ddf710f2d8522b4502899f"
+  },
+  {
+    "path": "meter/preferences.py",
+    "sha256": "ee9c13e9fcbfc8bea30a26b432f40aaea9e68967919fc23623a6036f05b9942c"
+  },
+  {
+    "path": "meter/quality.py",
+    "sha256": "6094675fbc167d5860955cf2527c16955b026065cef4f8209fabc0a6fcc31d20"
+  },
+  {
+    "path": "meter/quality_dialog.py",
+    "sha256": "359e0a8b022ba6a0d8fc79de97bcfda9e1c9d223742306d3c5c2989128bc7718"
+  },
+  {
+    "path": "meter/recording.py",
+    "sha256": "568d0e8a0211db48bd5ef1f649bea10f888b12192ee69fd8470123ea182d1a03"
+  },
+  {
+    "path": "meter/rune_display.py",
+    "sha256": "073c73ff230aa034627acbc715a29ec2305ec49cc02e771f9e4b85907bb4b4f8"
+  },
+  {
+    "path": "meter/support_dialog.py",
+    "sha256": "67079ac2fb55209ff20d902dc0b9a908c113941eafde6f3b40c1d176f303b9ca"
+  },
+  {
+    "path": "meter/support_export.py",
+    "sha256": "46e5fbe273032d69897f811165214054a9748bdd52e237db3d973435e116573f"
+  },
+  {
+    "path": "meter/worker.py",
+    "sha256": "b49ccde767ca59ddff9f0c2dc18dce45abd6b661646d3acbe92f8a87281b67b2"
+  },
+  {
+    "path": "README.md",
+    "sha256": "3554720e48bd6123c11d78518f5027302bacda7283cd320c493a132fc896b4b4"
+  },
+  {
+    "path": "requirements.txt",
+    "sha256": "8b861a816716dfd912b757b187935b301017dca35305ba1d1c896045392374da"
+  },
+  {
+    "path": "Start-Meter.cmd",
+    "sha256": "adc4763e9cd59bfdfdb6d83177ef0748ca6eb61c0c30d97daf869f0100d4cb11"
+  },
+  {
+    "path": "Start-Meter.ps1",
+    "sha256": "ab5cbb0b0bcd6ba6ec90b754cdf4503898d2dbaec63806d5bb121388cb89e011"
+  },
+  {
+    "path": "THIRD-PARTY-NOTICES.md",
+    "sha256": "fa943bd4cf89b3abe480fdc8514b8e6aafd5c2ca43c7cc87e982083ec39a4b82"
+  }
+]
