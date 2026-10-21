@@ -296,8 +296,12 @@
     "sha256": "b49ccde767ca59ddff9f0c2dc18dce45abd6b661646d3acbe92f8a87281b67b2"
   },
   {
+    "path": "README.de.md",
+    "sha256": "d45d2a4a5961f919433d541168ee17e178bffb1c973ae9bdaa48fef6577d484f"
+  },
+  {
     "path": "README.md",
-    "sha256": "48482dba10abf0ed09bf641a4048a9601ac98cf4b3290b95a52de25b5115bbab"
+    "sha256": "373d03739e1ec1b07cb574244c3753a7f451d39d39b07fd378cfe65eded1eb5a"
   },
   {
     "path": "requirements.txt",

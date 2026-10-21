@@ -1,5 +1,7 @@
 # Aion2Meter · 0.1.0 Beta
 
+**English** | [Deutsch](README.de.md)
+
 A Windows live DPS/healing meter for AION 2. English and German UI.
 
 ## Features
@@ -133,12 +135,13 @@ server triggers. TCP latency and capture gaps are not a reliable Internet
 packet-loss percentage. Missing damage is not invented.
 
 The public package contains no tests, catalog-analysis tools, private captures,
-developer configuration or dependency installers. Nothing is uploaded automatically.
+developer configuration or third-party installer binaries. The setup assistant
+only downloads Python packages when explicitly run. Logs are not uploaded automatically.
 
 
 ## Overlay settings
 
-**Clock settings** opens the event clock settings. **Attach to AION 2** makes
+**Settings > Clock** opens the event clock settings. **Attach to AION 2** makes
 an overlay follow the game and hide when the game is inactive, minimized or
 closed. The DPS/graph attachment selector applies the same behavior to either
 or both overlays. The clock has its own attachment and opacity controls.
