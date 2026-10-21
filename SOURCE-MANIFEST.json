@@ -297,11 +297,19 @@
   },
   {
     "path": "README.md",
-    "sha256": "3554720e48bd6123c11d78518f5027302bacda7283cd320c493a132fc896b4b4"
+    "sha256": "48482dba10abf0ed09bf641a4048a9601ac98cf4b3290b95a52de25b5115bbab"
   },
   {
     "path": "requirements.txt",
     "sha256": "8b861a816716dfd912b757b187935b301017dca35305ba1d1c896045392374da"
+  },
+  {
+    "path": "Setup-Meter.cmd",
+    "sha256": "aca7ce984cbeeb84221d04c1b42976213c340800414d0e5db687fe3afa850ce9"
+  },
+  {
+    "path": "Setup-Meter.ps1",
+    "sha256": "24e854b7b7bab13914e2ab9a88d84b9b0735f805154b8c2a2999f765dd661df0"
   },
   {
     "path": "Start-Meter.cmd",
