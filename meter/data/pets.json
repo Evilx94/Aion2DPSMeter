@@ -1,0 +1,435 @@
+{
+  "schema": 1,
+  "pets": [
+    {
+      "id": "dungeon-harcon",
+      "name": "Harcon",
+      "category": "dungeon",
+      "family": "Varian",
+      "location": "Krao Cave",
+      "note": "Enhanced Harcon"
+    },
+    {
+      "id": "dungeon-black-smoke-murute",
+      "name": "Black Smoke Murute",
+      "category": "dungeon",
+      "family": "Natura",
+      "location": "Fire Temple",
+      "note": ""
+    },
+    {
+      "id": "dungeon-red-spark-ignus",
+      "name": "Red Spark Ignus",
+      "category": "dungeon",
+      "family": "Natura",
+      "location": "Fire Temple",
+      "note": ""
+    },
+    {
+      "id": "dungeon-phantasmal-lakshmi",
+      "name": "Phantasmal Lakshmi",
+      "category": "dungeon",
+      "family": "Cogni",
+      "location": "Draupnir",
+      "note": ""
+    },
+    {
+      "id": "dungeon-predator-saraswati",
+      "name": "Predator Saraswati",
+      "category": "dungeon",
+      "family": "Cogni",
+      "location": "Draupnir",
+      "note": ""
+    },
+    {
+      "id": "candidate-aultross-s-doppelganger",
+      "name": "Aultross's Doppelganger",
+      "category": "candidate",
+      "family": "Cogni",
+      "location": "Pet Soul Chest: Cogni\nCloud Black Merchant",
+      "note": "",
+      "pet_id": 1044
+    },
+    {
+      "id": "candidate-dratona-tinkerer",
+      "name": "Dratona Tinkerer",
+      "category": "candidate",
+      "family": "Cogni",
+      "location": "Pet Soul Chest: Cogni\nCloud Black Merchant",
+      "note": "",
+      "pet_id": 1185
+    },
+    {
+      "id": "candidate-furious-feruk",
+      "name": "Furious Feruk",
+      "category": "candidate",
+      "family": "Cogni",
+      "location": "Pet Soul Chest: Cogni\nCloud Black Merchant",
+      "note": "",
+      "pet_id": 1191
+    },
+    {
+      "id": "candidate-mumu-overseer",
+      "name": "Mumu Overseer",
+      "category": "candidate",
+      "family": "Cogni",
+      "location": "Pet Soul Chest: Cogni\nCloud Black Merchant",
+      "note": "",
+      "pet_id": 1138
+    },
+    {
+      "id": "candidate-sentinel-k-nash",
+      "name": "Sentinel K'nash",
+      "category": "candidate",
+      "family": "Cogni",
+      "location": "Pet Soul Chest: Cogni\nCloud Black Merchant",
+      "note": "",
+      "pet_id": 1080
+    },
+    {
+      "id": "candidate-urugugu-brawler",
+      "name": "Urugugu Brawler",
+      "category": "candidate",
+      "family": "Cogni",
+      "location": "Pet Soul Chest: Cogni\nCloud Black Merchant",
+      "note": "",
+      "pet_id": 1078
+    },
+    {
+      "id": "candidate-aberrant-odyle-spider",
+      "name": "Aberrant Odyle Spider",
+      "category": "candidate",
+      "family": "Fera",
+      "location": "Pet Soul Chest: Fera\nCloud Black Merchant",
+      "note": "",
+      "pet_id": 1021
+    },
+    {
+      "id": "candidate-ashen-basilisk",
+      "name": "Ashen Basilisk",
+      "category": "candidate",
+      "family": "Fera",
+      "location": "Pet Soul Chest: Fera\nCloud Black Merchant",
+      "note": "",
+      "pet_id": 1198
+    },
+    {
+      "id": "candidate-ashen-lupyllini",
+      "name": "Ashen Lupyllini",
+      "category": "candidate",
+      "family": "Fera",
+      "location": "Pet Soul Chest: Fera\nCloud Black Merchant",
+      "note": "",
+      "pet_id": 1132
+    },
+    {
+      "id": "candidate-coradon",
+      "name": "Coradon",
+      "category": "candidate",
+      "family": "Fera",
+      "location": "Pet Soul Chest: Fera\nCloud Black Merchant",
+      "note": "",
+      "pet_id": 1057
+    },
+    {
+      "id": "candidate-elite-keneire",
+      "name": "Elite Keneire",
+      "category": "candidate",
+      "family": "Fera",
+      "location": "Pet Soul Chest: Fera\nCloud Black Merchant",
+      "note": "",
+      "pet_id": 1032
+    },
+    {
+      "id": "candidate-elite-ursus",
+      "name": "Elite Ursus",
+      "category": "candidate",
+      "family": "Fera",
+      "location": "Pet Soul Chest: Fera\nCloud Black Merchant",
+      "note": "",
+      "pet_id": 1043
+    },
+    {
+      "id": "candidate-flame-barghest",
+      "name": "Flame Barghest",
+      "category": "candidate",
+      "family": "Fera",
+      "location": "Pet Soul Chest: Fera\nCloud Black Merchant",
+      "note": "",
+      "pet_id": 1199
+    },
+    {
+      "id": "candidate-grave-rat",
+      "name": "Grave Rat",
+      "category": "candidate",
+      "family": "Fera",
+      "location": "Pet Soul Chest: Fera\nCloud Black Merchant",
+      "note": "",
+      "pet_id": 1055
+    },
+    {
+      "id": "candidate-kernon",
+      "name": "Kernon",
+      "category": "candidate",
+      "family": "Fera",
+      "location": "Pet Soul Chest: Fera\nCloud Black Merchant",
+      "note": "",
+      "pet_id": 1009
+    },
+    {
+      "id": "candidate-mutated-insectoid",
+      "name": "Mutated Insectoid Valka",
+      "category": "candidate",
+      "family": "Fera",
+      "location": "Pet Soul Chest: Fera\nCloud Black Merchant",
+      "note": "",
+      "ownership_aliases": [
+        "candidate-valka"
+      ],
+      "pet_id": 1145
+    },
+    {
+      "id": "candidate-venomous-insect-sram",
+      "name": "Venomous Insect Sram",
+      "category": "candidate",
+      "family": "Fera",
+      "location": "Pet Soul Chest: Fera\nCloud Black Merchant",
+      "note": "",
+      "pet_id": 1158
+    },
+    {
+      "id": "candidate-young-tog",
+      "name": "Young Tog",
+      "category": "candidate",
+      "family": "Fera",
+      "location": "Pet Soul Chest: Fera\nCloud Black Merchant",
+      "note": "",
+      "pet_id": 1122
+    },
+    {
+      "id": "candidate-ancient-spirit-dionae",
+      "name": "Ancient Spirit",
+      "category": "candidate",
+      "family": "Natura",
+      "location": "Pet Soul Chest: Natura\nCloud Black Merchant",
+      "note": "",
+      "pet_id": 1177
+    },
+    {
+      "id": "candidate-dried-up-forest-guardian",
+      "name": "Dried Up Forest Guardian",
+      "category": "candidate",
+      "family": "Natura",
+      "location": "Pet Soul Chest: Natura\nCloud Black Merchant",
+      "note": "",
+      "pet_id": 1102
+    },
+    {
+      "id": "candidate-elite-poisonous-spore-fungen",
+      "name": "Elite Poisonous Spore Fungen",
+      "category": "candidate",
+      "family": "Natura",
+      "location": "Pet Soul Chest: Natura\nCloud Black Merchant",
+      "note": "",
+      "pet_id": 1190
+    },
+    {
+      "id": "candidate-forest-dionae",
+      "name": "Forest Dionae",
+      "category": "candidate",
+      "family": "Natura",
+      "location": "Pet Soul Chest: Natura\nCloud Black Merchant",
+      "note": "",
+      "pet_id": 1133
+    },
+    {
+      "id": "candidate-ultimate-earth-spirit",
+      "name": "Ultimate Earth Spirit",
+      "category": "candidate",
+      "family": "Natura",
+      "location": "Pet Soul Chest: Natura\nCloud Black Merchant",
+      "note": "",
+      "pet_id": 1100
+    },
+    {
+      "id": "candidate-ultimate-fire-spirit",
+      "name": "Ultimate Fire Spirit",
+      "category": "candidate",
+      "family": "Natura",
+      "location": "Pet Soul Chest: Natura\nCloud Black Merchant",
+      "note": "",
+      "pet_id": 1082
+    },
+    {
+      "id": "candidate-ultimate-water-spirit",
+      "name": "Ultimate Water Spirit",
+      "category": "candidate",
+      "family": "Natura",
+      "location": "Pet Soul Chest: Natura\nCloud Black Merchant",
+      "note": "",
+      "pet_id": 1090
+    },
+    {
+      "id": "candidate-ultimate-wind-spirit",
+      "name": "Ultimate Wind Spirit",
+      "category": "candidate",
+      "family": "Natura",
+      "location": "Pet Soul Chest: Natura\nCloud Black Merchant",
+      "note": "",
+      "pet_id": 1079
+    },
+    {
+      "id": "candidate-drana-contaminant",
+      "name": "Drana Contaminant",
+      "category": "candidate",
+      "family": "Varian",
+      "location": "Pet Soul Chest: Varian\nCloud Black Merchant",
+      "note": "",
+      "pet_id": 1160
+    },
+    {
+      "id": "candidate-elite-soulless-corpse-gnat",
+      "name": "Elite Soulless Corpse Gnat",
+      "category": "candidate",
+      "family": "Varian",
+      "location": "Pet Soul Chest: Varian\nCloud Black Merchant",
+      "note": "",
+      "pet_id": 1182
+    },
+    {
+      "id": "candidate-flame-stone-guardian-statue",
+      "name": "Flame Stone Guardian Statue",
+      "category": "candidate",
+      "family": "Varian",
+      "location": "Pet Soul Chest: Varian\nCloud Black Merchant",
+      "note": "",
+      "pet_id": 1167
+    },
+    {
+      "id": "candidate-gatekeeper-pinopi",
+      "name": "Gatekeeper Pinopi",
+      "category": "candidate",
+      "family": "Varian",
+      "location": "Pet Soul Chest: Varian\nCloud Black Merchant",
+      "note": "",
+      "pet_id": 1146
+    },
+    {
+      "id": "candidate-krao-mutant",
+      "name": "Krao Mutant",
+      "category": "candidate",
+      "family": "Varian",
+      "location": "Pet Soul Chest: Varian\nCloud Black Merchant",
+      "note": "",
+      "pet_id": 1028
+    },
+    {
+      "id": "candidate-krao-seal-guardian",
+      "name": "Krao Seal Guardian",
+      "category": "candidate",
+      "family": "Varian",
+      "location": "Pet Soul Chest: Varian\nCloud Black Merchant",
+      "note": "",
+      "pet_id": 1107
+    },
+    {
+      "id": "candidate-krao-test-subject",
+      "name": "Krao Test Subject",
+      "category": "candidate",
+      "family": "Varian",
+      "location": "Pet Soul Chest: Varian\nCloud Black Merchant",
+      "note": "",
+      "pet_id": 1068
+    },
+    {
+      "id": "candidate-swamp-monster",
+      "name": "Swamp Monster",
+      "category": "candidate",
+      "family": "Varian",
+      "location": "Pet Soul Chest: Varian\nCloud Black Merchant",
+      "note": "",
+      "pet_id": 1139
+    },
+    {
+      "id": "special-black-dragon",
+      "name": "Black Dragon",
+      "category": "special",
+      "family": "Special",
+      "location": "Founder's Pack",
+      "note": ""
+    },
+    {
+      "id": "special-pagati",
+      "name": "Pagati",
+      "category": "special",
+      "family": "Special",
+      "location": "Advance: Pet Chest",
+      "note": ""
+    },
+    {
+      "id": "special-swift-lugi",
+      "name": "Swift Lugi",
+      "category": "special",
+      "family": "Special",
+      "location": "Daeva Pass",
+      "note": "guide"
+    },
+    {
+      "id": "special-wandering-merchant-lugi",
+      "name": "Wandering Merchant Lugi",
+      "category": "special",
+      "family": "Special",
+      "location": "Shugo Festival",
+      "note": ""
+    },
+    {
+      "id": "special-white-bunny",
+      "name": "White Bunny",
+      "category": "special",
+      "family": "Special",
+      "location": "Atelier Shop",
+      "note": ""
+    },
+    {
+      "id": "special-chonky-hamster",
+      "name": "Chonky Hamster",
+      "category": "special",
+      "family": "Special",
+      "location": "Atelier Shop",
+      "note": ""
+    },
+    {
+      "id": "special-two",
+      "name": "Two",
+      "category": "special",
+      "family": "Special",
+      "location": "Twitch drop",
+      "note": ""
+    },
+    {
+      "id": "special-little-ghost",
+      "name": "Little Ghost",
+      "category": "special",
+      "family": "Special",
+      "location": "Halloween event shop\nAtelier Shop",
+      "note": ""
+    },
+    {
+      "id": "special-pumpkin-carriage",
+      "name": "Pumpkin Carriage",
+      "category": "special",
+      "family": "Special",
+      "location": "Halloween event shop",
+      "note": ""
+    },
+    {
+      "id": "pet-1081",
+      "pet_id": 1081,
+      "name": "Dionae",
+      "category": "candidate",
+      "family": "Natura",
+      "location": "Pet Soul Chest: Natura\nCloud Black Merchant",
+      "note": ""
+    }
+  ]
+}

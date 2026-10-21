@@ -1,0 +1,31 @@
+{
+  "schema": 1,
+  "catalog_role": "runtime_local",
+  "facts": [
+    {"skill":1200010,"classification":"damage_dot","builtin":true},
+    {"skill":1200015,"classification":"damage_dot","builtin":true},
+    {"skill":1802000,"classification":"damage_dot","builtin":true},
+    {"skill":3001015,"classification":"damage_dot"},
+    {"skill":3001016,"classification":"damage_dot","builtin":true},
+    {"skill":12090023,"classification":"damage_dot","builtin":true},
+    {"skill":13730007,"classification":"damage_dot"},
+    {"skill":14050000,"classification":"damage_dot","builtin":true},
+    {"skill":14050020,"classification":"damage_dot"},
+    {"skill":14060000,"classification":"damage_dot"},
+    {"skill":15060026,"classification":"damage_dot","builtin":true},
+    {"skill":15060028,"classification":"damage_dot","builtin":true},
+    {"skill":15060029,"classification":"damage_dot","builtin":true},
+    {"skill":15200002,"classification":"damage_dot","builtin":true},
+    {"skill":15200012,"classification":"damage_dot","builtin":true},
+    {"skill":15390000,"classification":"damage_dot","builtin":true},
+    {"skill":15390010,"classification":"damage_dot","builtin":true},
+    {"skill":17070000,"classification":"damage_dot","builtin":true},
+    {"skill":17070020,"classification":"damage_dot"},
+    {"skill":17070230,"classification":"damage_dot","builtin":true},
+    {"skill":17070240,"classification":"damage_dot","builtin":true},
+    {"skill":17080030,"classification":"damage_dot","builtin":true},
+    {"skill":17080240,"classification":"damage_dot","builtin":true},
+    {"skill":17080350,"classification":"damage_dot","builtin":true},
+    {"skill":17400010,"classification":"damage_dot","builtin":true}
+  ]
+}
