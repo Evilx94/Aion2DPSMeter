@@ -1,0 +1,109 @@
+name: Windows build and signing
+
+on:
+  workflow_dispatch:
+    inputs:
+      sign:
+        description: 'Request SignPath signing (requires approved account and configuration)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  windows:
+    runs-on: windows-2025
+    timeout-minutes: 60
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      QT_QPA_PLATFORM: offscreen
+    steps:
+      - name: Preserve source bytes
+        run: git config --global core.autocrlf false
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.15.0-rc.3'
+          architecture: x64
+      - name: Check SignPath configuration
+        if: inputs.sign
+        env:
+          SIGNPATH_API_TOKEN: ${{ secrets.SIGNPATH_API_TOKEN }}
+          SIGNPATH_ORGANIZATION_ID: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          SIGNPATH_PROJECT_SLUG: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          SIGNPATH_SIGNING_POLICY_SLUG: ${{ vars.SIGNPATH_SIGNING_POLICY_SLUG }}
+        run: |
+          foreach ($key in 'SIGNPATH_API_TOKEN','SIGNPATH_ORGANIZATION_ID','SIGNPATH_PROJECT_SLUG','SIGNPATH_SIGNING_POLICY_SLUG') {
+            if (-not [Environment]::GetEnvironmentVariable($key)) { throw "Missing configuration: $key" }
+          }
+      - name: Install build dependencies on GitHub runner
+        run: python -m pip install -r requirements.txt -r tools/requirements-build.txt
+      - name: Build portable package
+        run: |
+          $version = python -c "from pathlib import Path; import sys; sys.path.insert(0,'tools'); from build_windows import version_of; print(version_of(Path('.')))"
+          if ($LASTEXITCODE) { throw 'Version check failed' }
+          "METER_VERSION=$version" >> $env:GITHUB_ENV
+          "METER_PACKAGE=$env:RUNNER_TEMP/release/Aion2Meter-$version-windows-x64" >> $env:GITHUB_ENV
+          python tools/build_windows.py --work "$env:RUNNER_TEMP/meter-build" --output "$env:RUNNER_TEMP/release/Aion2Meter-$version-windows-x64"
+          if ($LASTEXITCODE) { throw 'Build failed' }
+      - name: Test bundled GUI without external Python paths
+        run: |
+          $env:PYTHONHOME = "$env:RUNNER_TEMP/no-python-here"
+          $env:PYTHONPATH = "$env:RUNNER_TEMP/no-modules-here"
+          $env:AION2_METER_DATA_DIR = "$env:RUNNER_TEMP/meter-test-data"
+          $env:PATH = "$env:WINDIR\System32;$env:WINDIR"
+          $process = Start-Process -FilePath "$env:METER_PACKAGE/Aion2Meter.exe" -ArgumentList @('--self-test', "$env:RUNNER_TEMP/selftest.json") -PassThru -WindowStyle Hidden
+          if (-not $process.WaitForExit(90000)) { $process.Kill(); throw 'Self-test timed out' }
+          if ($process.ExitCode -ne 0) { throw "Self-test failed: $($process.ExitCode)" }
+          $report = Get-Content "$env:RUNNER_TEMP/selftest.json" -Raw | ConvertFrom-Json
+          if (-not $report.ok) { throw 'Self-test report failed' }
+          # No Npcap driver is installed on the hosted runner: no live capture test.
+      - name: Record successful GUI test and refresh manifest
+        run: |
+          python -c "from pathlib import Path; import os,json,sys; sys.path.insert(0,'tools'); from build_windows import checksum_zip; p=Path(os.environ['METER_PACKAGE']); f=p/'BUILD-STATUS.json'; s=json.loads(f.read_text()); s['runtime_test']='passed-isolated-gui-no-live-capture'; f.write_text(json.dumps(s,indent=2)+'\n',encoding='utf-8'); checksum_zip(p)"
+          if ($LASTEXITCODE) { throw 'Test status or manifest update failed' }
+      - name: Upload unsigned EXE for SignPath origin verification
+        if: inputs.sign
+        id: unsigned
+        uses: actions/upload-artifact@v7
+        with:
+          name: unsigned-exe-for-signpath
+          path: ${{ env.METER_PACKAGE }}/Aion2Meter.exe
+          if-no-files-found: error
+          retention-days: 7
+      - name: Request approved signing and download result
+        if: inputs.sign
+        uses: signpath/github-action-submit-signing-request@v3
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: ${{ vars.SIGNPATH_SIGNING_POLICY_SLUG }}
+          github-artifact-id: ${{ steps.unsigned.outputs.artifact-id }}
+          wait-for-completion: true
+          wait-for-completion-timeout-in-seconds: 1800
+          output-artifact-directory: ${{ runner.temp }}/meter-signed
+      - name: Verify signature and regenerate final ZIP and SHA-256
+        if: inputs.sign
+        run: |
+          python tools/finalize_windows.py --folder "$env:METER_PACKAGE" --signed-exe "$env:RUNNER_TEMP/meter-signed/Aion2Meter.exe"
+          if ($LASTEXITCODE) { throw 'Signature or packaging check failed' }
+      - name: Downloadable release files (no automatic publication)
+        uses: actions/upload-artifact@v7
+        with:
+          name: Aion2Meter-${{ env.METER_VERSION }}-windows-${{ inputs.sign && 'signed' || 'unsigned' }}
+          path: |
+            ${{ env.METER_PACKAGE }}.zip
+            ${{ env.METER_PACKAGE }}.zip.sha256
+          if-no-files-found: error
+      - name: Self-test report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: runtime-selftest
+          path: ${{ runner.temp }}/selftest.json
+          if-no-files-found: ignore
