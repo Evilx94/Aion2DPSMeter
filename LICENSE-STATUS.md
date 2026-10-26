@@ -1,6 +1,9 @@
 # License status
 
-A final project license has not yet been selected for this project.
+Aion2Meter project code is licensed under GNU GPL version 3 only
+(SPDX: GPL-3.0-only). See LICENSE. The maintainer selected this license on
+2026-10-26. Third-party code, runtime components and game data retain their
+respective terms and attribution; this project license does not replace them.
 It does not claim exclusive ownership of third-party components or data.
 Existing source credits, the reference notice and the reference license text
 are retained.
@@ -17,8 +20,9 @@ tables. Consolidating or checking the records does not remove that history.
 
 The earlier GPL port, its original notices and recordings remain outside
 this separate project. Python, Scapy, PySide6 and Npcap retain their
-respective terms; no interpreter, library binary or driver installer is
-distributed here.
+respective terms; the source ZIP contains no interpreter or library binaries. The separate Windows
+package bundles the runtime and libraries with notices under licenses/runtime;
+Npcap is installed separately and its DLLs/driver are not redistributed.
 
 See [third-party notices](THIRD-PARTY-NOTICES.md),
 [provenance](docs/PROVENANCE.md) and [catalog structure](docs/CATALOG.md).

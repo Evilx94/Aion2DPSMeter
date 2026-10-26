@@ -29,12 +29,18 @@ class Ledger:
         self.active=[];self.active_actors=set();self.actor_equipment={};self.closed=[];self.integrity='ok';self.sequence=0;self.time=-1;self.last_damage=None;self.unresolved_owner_events=0;self.issues=Counter();self.pending_issues=Counter();self.pending_time=None;self.capture_partial=False;self.fight_identity=None;self.fight_partial=False;self.connection_epoch=0;self.unidentified_hits={}
         from collections import deque
         from .activity import BuffTracker
+        self.notice_events=deque(maxlen=20000);self.notice_assigned=set()
         self.cast_events=deque(maxlen=20000);self.cast_assigned=set();self.buffs=BuffTracker();self.activity_generation=self.world.generation;self.activity_revision=0
         self.set_location(None)
         self.fight_group_state=None
         self.actor_issues=Counter();self.pending_actor_issues=Counter()
+        from .deferred_damage import DeferredDamage
+        self.deferred_damage=DeferredDamage(self)
+        from .unassigned import UnassignedEntities
+        self.unassigned=UnassignedEntities(self)
     def sync_activity(self):
         if self.activity_generation!=self.world.generation:
+            self.notice_events.clear();self.notice_assigned.clear()
             self.cast_events.clear();self.cast_assigned.clear();self.buffs.reset();self.activity_generation=self.world.generation;self.activity_revision+=1
     def equipment(self,actor):
         person=self.world.people.get(actor)
@@ -57,6 +63,18 @@ class Ledger:
         person=self.world.people.get(actor)
         self.cast_events.append({'key':key,'time':time,'actor':actor,'skill':record.skill,'name':person.name if person else '',
                                  'class':person.class_name if person else '', 'name_source':person.name_source if person else '', 'equipment':self.equipment(actor)})
+        if self.active:self.active_actors.add(actor)
+        self.activity_revision+=1;return True
+    def hit_notice(self,time,record):
+        self.sync_activity();actor=self.world.resolve(record.actor)
+        if actor!=record.actor or not self.world.authorized(record.actor) or actor in self.world.npcs:return False
+        if record.target in self.world.people or record.target in self.world.summons or record.target in self.world.retired:return False
+        key=(time,record)
+        if self.notice_events and self.notice_events[-1]['key']==key:return False
+        person=self.world.people.get(actor)
+        self.notice_events.append({'key':key,'time':time,'actor':actor,'target':record.target,'skill':record.skill,
+                                   'name':person.name if person else '', 'class':person.class_name if person else '',
+                                   'name_source':person.name_source if person else '', 'equipment':self.equipment(actor)})
         if self.active:self.active_actors.add(actor)
         self.activity_revision+=1;return True
     def buff(self,time,record):
@@ -89,6 +107,7 @@ class Ledger:
         from dataclasses import replace
         person=self.world.people.get(entity)
         if not person or not person.confirmed or not person.name:return
+        self.unassigned.refresh_identity(entity)
         self.active=[replace(e,name=person.name,name_source=person.name_source,class_name=e.class_name or person.class_name)
                      if e.actor==entity and (not e.name or (e.name_source=='manual' and e.name.casefold()==person.name.casefold())) else e for e in self.active]
         if self.fight_identity and self.fight_identity.get('id')==entity and not self.fight_identity.get('name'):
@@ -131,7 +150,8 @@ class Ledger:
         if hit.kind=='damage' and (hit.source in self.world.npcs or hit.target in self.world.summons):return False
         if self.integrity!='ok' or hit.kind not in ('damage','heal') or hit.amount<=0:return False
         if hit.kind=='heal' and not self.active:return False
-        if self.party_only and not self.world.authorized(hit.source):self.skipped_without_identity(time,hit);return False
+        if self.party_only and not self.world.authorized(hit.source):
+            self.skipped_without_identity(time,hit);self.unassigned.observe(time,hit);self.deferred_damage.queue(time,hit);return False
         actor=self.world.resolve(hit.source)
         if actor is None or (actor in self.world.retired and actor not in self.world.people) or actor in self.world.npcs or (actor in self.world.summons and actor not in self.world.owners) or (hit.kind=='damage' and actor==hit.target):return False
         if hit.kind=='damage' and self.world.resolve(hit.target) in self.world.people and (not self.track_pvp or self.world.authorized(hit.target)):return False
@@ -194,6 +214,9 @@ class Ledger:
     def finish(self,reason):
         if self.active:
             self.sequence+=1;summary=self.summary(self.active,reason,self.sequence);self.closed.append(summary);self.closed=self.closed[-30:]
+            self.deferred_damage.archive()
+            self.notice_assigned.update(event['key'] for event in self.notice_events if summary['start_ms']<=event['time']<=summary['last_damage_ms'])
+            self.notice_assigned.intersection_update(event['key'] for event in self.notice_events)
             self.cast_assigned.update(event['key'] for event in self.cast_events if summary['start_ms']-1000<=event['time']<=summary['last_damage_ms'])
             self.cast_assigned.intersection_update(event['key'] for event in self.cast_events)
             self.active=[];self.active_actors.clear();self.actor_equipment.clear();self.last_damage=None
@@ -258,6 +281,13 @@ class Ledger:
             if actor not in equipment and event.get('equipment'):equipment[actor]=event['equipment']
             if actor not in totals:
                 totals[actor]=0;names[actor]=event['name'];classes[actor]=event['class'];sources[actor]=event['name_source']
+        actor_notices=Counter()
+        for event in self.notice_events:
+            if event['key'] in self.notice_assigned or not start<=event['time']<=last or event['target'] not in targets:continue
+            actor=event['actor'];actor_notices[actor]+=1
+            if actor not in totals:
+                totals[actor]=0;names[actor]=event['name'];classes[actor]=event['class'];sources[actor]=event['name_source']
+            if actor not in equipment and event.get('equipment'):equipment[actor]=event['equipment']
         usage={}
         for (actor,skill),count in cast_counts.items():
             family=skill-skill%10000 if 11_000_000<=skill<20_000_000 else skill
@@ -307,10 +337,10 @@ class Ledger:
         if sparse:quality['worldboss_damage_sparse']=1
         from .damage_sections import damage_sections
         sections=damage_sections(entries,valid) if location.get('dungeon_name') else {}
-        return {**location,'damage_sections':sections,'combat_type':combat_type,'id':identifier,'start_ms':start,'last_damage_ms':last,'seconds':seconds,'reason':reason,'integrity':self.integrity,
+        result={**location,'damage_sections':sections,'combat_type':combat_type,'id':identifier,'start_ms':start,'last_damage_ms':last,'seconds':seconds,'reason':reason,'integrity':self.integrity,
                 'group_state':group_state,'group_coverage_confirmed':group_state in ('members','solo') if self.party_only else None,
                 'damage_coverage':'sparse_worldboss_amounts' if sparse else 'observed_only',
-                'partial':self.fight_partial or bool(quality),'coverage_incomplete':bool(quality),
+                'capture_partial':self.fight_partial,'partial':self.fight_partial or bool(quality),'coverage_incomplete':bool(quality),
                 'connection_epoch':self.connection_epoch,'quality_issues':quality,'self_identity':dict(self.fight_identity or {}),
                 'target_id':primary,'target_name':npc.name if npc else '',
                 'target_template':npc.template if npc else 0,'target_hp':npc.hp if npc else None,'target_max_hp':npc.max_hp if npc else 0,
@@ -324,9 +354,19 @@ class Ledger:
                 'healing_filtered':True,'healing_coverage_incomplete':bool(recovery_events),'unclassified_recovery_events':recovery_events,
                 'healing_timeline':[{'second':second,'healing':amount,'self_healing':self_timeline[second],'other_healing':other_timeline[second]} for second,amount in sorted(heal_timeline.items())],
                 'casts_observed':True,'cast_window_start_ms':start-1000,'cast_usage':list(usage.values()),'buffs':self.buffs.summary(start,last,set(totals)),'buffs_observed_only':True,
-                'actors':[{'id':actor,'name':names[actor],'class':classes[actor],'server':servers.get(actor,0),'name_source':sources[actor],'damage':amount,'healing':healing[actor],'self_healing':heal_self[actor],'other_healing':heal_other[actor],'group_healing':heal_group[actor],'hps':healing[actor]/healing_seconds if valid else None,'summon_damage':summoned[actor],'dot_ticks':dots[actor],'dot_damage':dot_damage[actor],'hits':hits[actor],'crits':crits[actor],'dps':amount/seconds if valid else None,'casts':actor_casts[actor],'data_quality':{'damage_events':damage_events[actor],'healing_events':heal_events[actor],'casts':actor_casts[actor],'issues':{reason:count for (source,reason),count in self.actor_issues.items() if source==actor},'completeness_confirmed':False},**equipment.get(actor,{})} for actor,amount in totals.most_common()],
+                'actors':[{'id':actor,'name':names[actor],'class':classes[actor],'server':servers.get(actor,0),'name_source':sources[actor],'damage':amount,'healing':healing[actor],'self_healing':heal_self[actor],'other_healing':heal_other[actor],'group_healing':heal_group[actor],'hps':healing[actor]/healing_seconds if valid else None,'summon_damage':summoned[actor],'dot_ticks':dots[actor],'dot_damage':dot_damage[actor],'hits':hits[actor],'crits':crits[actor],'dps':amount/seconds if valid else None,'casts':actor_casts[actor],'hit_notices':actor_notices[actor],'data_quality':{'damage_events':damage_events[actor],'healing_events':heal_events[actor],'casts':actor_casts[actor],'hit_notices':actor_notices[actor],'issues':{reason:count for (source,reason),count in self.actor_issues.items() if source==actor},'completeness_confirmed':False},**equipment.get(actor,{})} for actor,amount in totals.most_common()],
                 'timeline':[{'second':second,'damage':amount} for second,amount in sorted(timeline.items())],
                 'skills':[{'actor':actor,'skill':skill,'damage':skills[(actor,skill)],'healing':skill_healing[(actor,skill)],'unclassified_recovery':recovery[(actor,skill)],'self_healing':skill_self[(actor,skill)],'other_healing':skill_other[(actor,skill)],'hits':skill_hits[(actor,skill)],'crits':skill_crits[(actor,skill)],'dot_ticks':skill_dots[(actor,skill)],'summon_damage':skill_summoned[(actor,skill)],'casts':cast_counts[(actor,skill)]} for actor,skill in sorted(set(skills)|set(skill_healing)|set(cast_counts)|set(recovery))]}
+        from ..group_identity import identity_status
+        result['group_identity']=identity_status(self.world)
+        result['group_roster']=[{key:row[key] for key in ('name','server','class','character_id') if key in row} for row in self.world.party_records]
+        observed={(a['name'],a.get('server',0)) for a in result['actors']}
+        for row in result['group_roster']:
+            row['combat_events_observed']=(row['name'],row['server']) in observed or ((row['name'],0) in observed and sum(r['name']==row['name'] for r in result['group_roster'])==1)
+        from ..observation_quality import annotate_worldboss
+        from ..personal_boss import personal_fight
+        return annotate_worldboss(personal_fight(result,self.encounters,entries))
     def snapshot(self):
         from copy import deepcopy
-        return deepcopy(self.closed+([self.summary(self.active,'active',self.sequence+1)] if self.active else []))
+        return self.unassigned.annotate(deepcopy(self.closed+([self.summary(self.active,'active',self.sequence+1)] if self.active else [])))
+

@@ -172,3 +172,19 @@ def label_row(row,labels):
     if runes:
         row['specialization_slots']=runes['slots'];row['specialization_status']=runes['status']
     return row
+
+
+def label_buff_row(row,labels):
+    """Use an explicit wire skill link as a display hint, never an effect fact."""
+    from ..language import tr
+    if row.get('name') not in (None,'','?') and row.get('name_match') not in ('associated_skill','unknown'):
+        return row
+    skill=row.get('skill',0);fact=labels.display_lookup(skill) if skill else None
+    row['effect_name_confirmed']=False
+    if fact:
+        row.update(name=tr('{0} · Effekt {1}',fact.name,row['abnormal']),skill_name=fact.name,
+                   name_source=tr('Skill-ID aus der Buffmeldung: {0}; genauer Effektname unbestätigt.',skill),
+                   name_match='associated_skill')
+    else:
+        row.update(name=tr('Unbekannter Effekt {0}',row['abnormal']),name_match='unknown')
+    return row

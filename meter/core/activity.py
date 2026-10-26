@@ -77,10 +77,11 @@ def buff_catalog():
 
 class BuffTracker:
     def __init__(self):
-        self.live={};self.timers=[];self.timer_version=0;self.closed=deque(maxlen=20000);self.offsets=deque(maxlen=64);self.revision=0;self.issues=Counter()
+        self.live={};self.timers=[];self.timer_version=0;self.closed=deque(maxlen=20000);self.offsets=deque(maxlen=64);self.revision=0;self.issues=Counter();self.pending_lists={}
     def reset(self):
-        self.live.clear();self.timers.clear();self.closed.clear();self.offsets.clear();self.revision+=1;self.issues.clear()
+        self.live.clear();self.timers.clear();self.closed.clear();self.offsets.clear();self.revision+=1;self.issues.clear();self.pending_lists.clear()
     def close(self,key,time,reason):
+        self.pending_lists.pop(key,None)
         state=self.live.pop(key,None)
         if state is None:return
         end=min(time,state['expires']) if state['expires'] is not None else time
@@ -97,6 +98,7 @@ class BuffTracker:
             expires,version,key=heapq.heappop(self.timers);state=self.live.get(key)
             if state and state['timer_version']==version:self.close(key,expires,'timer')
     def gone(self,entity,time):
+        self.pending_lists={k:v for k,v in self.pending_lists.items() if k[0]!=entity}
         for key in list(self.live):
             if key[0]==entity:self.close(key,time,'entity_end')
     def accept(self,record,time):
@@ -107,12 +109,21 @@ class BuffTracker:
         key=(record.entity,record.instance);old=self.live.get(key)
         if record.operation=='add' and record.duration>=0:
             self.offsets.append(time-(record.end-record.duration))
+            pending=self.pending_lists;self.pending_lists={}
+            for previous,stamp in pending.values():self.accept(previous,stamp)
+            old=self.live.get(key)
         expires=None
         if record.duration>=0:
             if old and old.get('server_end') and old['expires'] is not None:
                 expires=old['expires']+(record.end-old['server_end']) if old['expires'] is not None else None
             elif self.offsets:expires=int(record.end+median(self.offsets))
             else:
+                if record.operation=='listed':
+                    if len(self.pending_lists)<10000:
+                        previous=self.pending_lists.get(key)
+                        stamp=previous[1] if previous and previous[0]==record else time
+                        self.pending_lists[key]=(record,stamp)
+                    self.issues['listed_without_clock']+=1;return
                 if old:self.close(key,time,'timer_changed_without_clock')
                 self.issues['unseen_change_without_clock']+=1;return
         if old and record.operation=='change' and old['abnormal']==record.abnormal and old['caster']==record.caster:
@@ -128,6 +139,14 @@ class BuffTracker:
         self.live[key]={'actor':record.entity,'abnormal':record.abnormal,'caster':record.caster,'skill':record.skill,
                         'from':time,'expires':expires,'server_end':record.end,'observed_only':True}
         self.schedule(key,self.live[key]);self.revision+=1
+    def listed(self,records,time):
+        if not records:return
+        entity=records[0].entity;present={(entity,r.instance) for r in records}
+        for key in list(self.live):
+            if key[0]==entity and key not in present:self.close(key,time,'not_listed')
+        for key in list(self.pending_lists):
+            if key[0]==entity and key not in present:self.pending_lists.pop(key,None)
+        for record in records:self.accept(record,time)
     def summary(self,start,end,actors):
         if end<=start:return []
         groups={}

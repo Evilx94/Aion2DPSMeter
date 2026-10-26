@@ -10,6 +10,8 @@ class CombatLogWriter:
     def __init__(self,directory):
         self.directory=Path(directory);self.cache={};self.lock=RLock();self.last_path=None
     def save(self,report,force=False):
+        from .personal_boss import personal_report
+        report=personal_report(report)
         session=report.get('session',{})
         if session.get('mode')!='live' or not session.get('id') or not report.get('packets'):return []
         written=[]

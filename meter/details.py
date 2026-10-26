@@ -39,6 +39,8 @@ class PlayerDetails(QDialog):
         if status!='unknown':item.setForeground(QColor('#71ddc4' if status in ('confirmed_exact','user_confirmed_pattern') else '#d9bd7b'))
         table.setItem(index,column,item)
     def set_report(self,report):
+        from .personal_boss import personal_report
+        report=personal_report(report)
         if report.get('session',{}).get('id')!=self.session_id:return
         fight=next((f for f in report.get('fights',[]) if f['id']==self.fight_id),None)
         if fight is None:return
@@ -46,8 +48,13 @@ class PlayerDetails(QDialog):
         if actor is None:return
         self.report=deepcopy({**report,'fights':[fight]});self.title.setText(actor_label(actor,fight,report)+' · '+(actor.get('class') or _tr('Klasse unbekannt')));self.title.setTextFormat(Qt.TextFormat.PlainText)
         valid=fight.get('integrity','ok')=='ok';damage=actor.get('damage',0);total=fight.get('total_damage') or 0
-        share=decimal(f'{percentage(damage, total):.1f} %') if valid else '—'
+        from .observation_quality import sparse_damage_coverage,damage_amount_partial
+        share=decimal(f'{percentage(damage, total):.1f} %') if valid and fight.get('tracking_scope')!='self' and not sparse_damage_coverage(fight) else '—'
         self.summary.setText(_tr('{0} DPS · {1} Schaden · {2} Anteil\n{3} Treffer · {4} kritisch · {5} DoT-Ticks · {6} Begleiter · {7} Heilung' ,number(actor.get('dps') if valid else None),number(damage),share,actor.get('hits', 0),actor.get('crits', 0),actor.get('dot_ticks', 0),number(actor.get('summon_damage', 0)),number(actor.get('healing', 0))))
+        from .observation_quality import damage_amount_missing
+        if damage_amount_missing(actor,fight):
+            self.summary.setText(_tr('Kein Schadensbetrag erfasst; 0 Schaden ist nicht bestätigt.')+'\n'+_tr('{0} Casts / Trigger · {1} Heilung',actor.get('casts',0),number(actor.get('healing',0))))
+        if damage_amount_partial(actor,fight):self.summary.setText(self.summary.text()+'\n'+_tr('Nur periodische Schadensbeträge erfasst; direkte Treffer fehlen.'))
         self.summary.setText(self.summary.text()+'\n'+equipment_text(actor))
         self.damage_summary=self.summary.text()
         self.quality.setText(_tr('Paketkonflikt: Zahlen sind nicht verlässlich.') if not valid else (_tr('Teilausschnitt / unvollständige Zuordnung – nur beobachtete Ereignisse.') if fight.get('partial') or fight.get('coverage_incomplete') else _tr('Beobachtete Kampfdaten')))
@@ -92,6 +99,8 @@ class PlayerDetails(QDialog):
         if not buffs and 'buffs' in fight:self.buff_note.setText(_tr('Keine messbaren Buffintervalle für diesen Spieler. Das bedeutet keine bestätigte Uptime von 0 %.'))
         self.buff_table.setRowCount(len(buffs))
         for index,buff in enumerate(buffs):
+            from .core.skill_labels import label_buff_row
+            buff=label_buff_row(dict(buff),self.skill_labels)
             values=[buff.get('name') or '?',decimal(f"{buff['uptime_ms'] / 1000:.1f}") if valid else '—',decimal(f"{buff['uptime_percent']:.1f} %") if valid else '—',str(buff['max_stacks']) if valid else '—']
             for column,value in enumerate(values):
                 item=QTableWidgetItem(value);self.buff_table.setItem(index,column,item)
@@ -221,6 +230,8 @@ class FightHistory(QDialog):
         reports=[r for report in self.all_reports if (r:=project_report(report,scope)) is not None]
         dialog=FightComparison(self.reports[index],reports,self);self.dialogs.append(dialog);dialog.destroyed.connect(lambda:self.forget(dialog));dialog.show()
     def add(self,report,source):
+        from .personal_boss import personal_report
+        report=personal_report(report)
         from datetime import datetime
         f=report['fights'][-1];stamp=datetime.fromtimestamp(f.get('start_ms',0)/1000).strftime('%d.%m. %H:%M:%S')
         self.reports.append(deepcopy(report));self.choice.addItem(f"{stamp} · {(f.get('dungeon_name') or f.get('region_name'))+' · ' if (f.get('dungeon_name') or f.get('region_name')) else ''}{f.get('boss_name') or f.get('target_name') or _tr('Kampf')} · {int(f.get('seconds',0))} s · {source}")

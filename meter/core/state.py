@@ -33,7 +33,7 @@ class World:
         if isinstance(name,str) and name and len(name)<=16 and name.isalnum() and any(c.isalpha() for c in name) and type(server) is int and 1<=server<=9999:
             self.preferred_identity={'name':name,'server':server}
     def reset(self):
-        self.party_complete=True
+        self.party_complete=True;self.party_source='snapshot'
         self.people={};self.owners={};self.summons={};self.npcs={};self.retired=set();self.unresolved_damage=set();self.members=frozenset();self.party_records=();self.player_records={};self.party_links={};self.party_trusted=True;self.party_known=False;self.party_key=None;self.entity_versions={};self.self_entity=None;self.self_recognition='';self.local_candidates={};self.local_conflict=False;self.generation=getattr(self,'generation',-1)+1
     def local_identity(self,entity,time):
         if time is None:return False
@@ -63,7 +63,8 @@ class World:
         if not person.name and len(names)==1:
             self.identity(person.entity,next(iter(names)),person.server,confirmed=True,class_name=person.class_name)
     def zone_reset(self):
-        records=self.party_records;trusted=self.party_trusted;known=self.party_known;key=self.party_key;complete=self.party_complete
+        if self.party_source=='status_recovery':self.reset();return
+        records=tuple(r for r in self.party_records if r.get('membership_source') not in ('raid_status_recovery','raid_actor_status'));trusted=self.party_trusted;known=self.party_known;key=self.party_key;complete=self.party_complete and len(records)==len(self.party_records)
         self.reset();self.party(records,party_key=key,complete=complete);self.party_trusted=trusted;self.party_known=known
     def player_record(self,entity,payload):
         if len(payload)>8192:return
@@ -180,11 +181,11 @@ class World:
             bound.add(entity);self.unresolved_damage.discard(entity)
             for child in dependencies[entity]:
                 if child not in scheduled and child not in bound:queue.append(child);scheduled.add(child)
-    def party(self,members,party_key=None,complete=True):
-        self.party_key=party_key
+    def party(self,members,party_key=None,complete=True,source='snapshot'):
+        self.party_key=party_key;self.party_source=source
         self.party_complete=bool(complete)
         self.party_records=tuple(dict(m) for m in members)
-        self.members=frozenset((m['name'],m['server']) for m in self.party_records);self.party_trusted=True;self.party_known=True;self.link_party();self.bind_summons()
+        self.members=frozenset((m['name'],m['server']) for m in self.party_records if m.get('membership_source')!='raid_actor_status');self.party_trusted=True;self.party_known=True;self.link_party();self.bind_summons()
     def owner(self,pet,player):
         if pet==player:raise ValueError('self owner')
         previous=self.owners.get(pet);self.owners[pet]=player
@@ -204,4 +205,4 @@ class World:
         if actor is None:return False
         if actor==self.self_entity:return True
         person=self.people.get(actor)
-        return bool(self.party_trusted and person and person.confirmed and ((person.name,person.server) in self.members or (actor in self.party_links and self.party_links[actor][:2] in self.members)))
+        return bool(self.party_trusted and person and person.confirmed and ((person.name,person.server) in self.members or (actor in self.party_links and self.party_links[actor][:2] in self.members) or any(r.get('membership_source')=='raid_actor_status' and actor not in self.retired and actor not in self.npcs and actor not in self.summons and r.get('evidence_entity')==actor and r.get('evidence_token')==self.identity_token(actor) and r['name']==person.name and r['class']==person.class_name and r['server']==self.player_server(actor) for r in self.party_records)))

@@ -29,6 +29,8 @@ def number(value):
     return f'{value:.0f}'
 
 def actor_label(actor,fight,report):
+    if actor.get('provisional_membership'):
+        return _tr('{0} · Entity {1} · ?',actor.get('name') or actor.get('class') or _tr('Spieler ?'),actor['id'])
     if actor.get('name'):return actor['name']
     previous=fight.get('self_identity',{});current=report.get('self_identity',{})
     own=previous.get('id',report.get('self_id'))
@@ -84,6 +86,9 @@ class DamageView(QWidget):
     def set_data(self,report,settings):
         from .metrics import metric_report
         self.report,self.settings=metric_report(report,settings.get('display_metric','damage')),dict(settings)
+        if not self.graph:
+            from .unassigned_view import provisional_report
+            self.report=provisional_report(self.report)
         self.theme=appearance(settings,'graph' if self.graph else 'dps');self.paint_scale=self.theme['font_size']/10
         self.setMinimumSize(round(260*self.paint_scale),round(130*self.paint_scale))
         title=fight_title(self.fight());self.encounter_title=title
@@ -140,7 +145,11 @@ class DamageView(QWidget):
         hint=number(fight.get('total_damage'))+' '+unit
         if fight.get('metric') and fight.get('healing_legacy'):hint+=_tr(' · älterer Log, Aufteilung ggf. unbekannt')
         if fight.get('partial'):hint+=_tr(' · Teilausschnitt')
+        from .observation_quality import sparse_damage_coverage
+        if sparse_damage_coverage(fight):hint=_tr('Direkter Gruppenschaden unvollständig · Anteile unbekannt')
         if self.report.get('group_state') in ('missing','invalid'):hint=_tr('Gruppendaten fehlen') if self.report['group_state']=='missing' else _tr('Gruppendaten unvollständig')
+        if fight.get('tracking_scope')=='self':hint=_tr('World-/Abyssboss · nur eigener Spieler')+(_tr(' · Teilausschnitt') if fight.get('partial') else '')
+        if fight.get('provisional_rows'):hint=_tr('Entity-Zeilen mit ? · Gruppe unbestätigt; separat erfasst')
         if len(all_actors)>len(actors):hint+=f' · {self.scroll_index+1}–{self.scroll_index+len(actors)}/{len(all_actors)}'
         painter.setFont(self.ui_font(8));painter.setPen(QColor(self.theme['secondary']))
         hint=QFontMetrics(painter.font()).elidedText(hint,Qt.TextElideMode.ElideRight,max(0,int(rect.width()-24)))
@@ -159,7 +168,10 @@ class DamageView(QWidget):
             if actor['id']==own:painter.setPen(QPen(QColor(self.theme['border']),1));painter.setBrush(Qt.BrushStyle.NoBrush);painter.drawRoundedRect(row,5,5)
             label=actor_label(actor,fight,self.report)
             if actor.get('name_source') in ('manual','cache'):label+=' *'
-            value=number(actor.get('dps'))+' /s';dps_font=self.ui_font(self.settings.get('dps_font_size',14),QFont.Weight.Bold)
+            from .observation_quality import damage_amount_missing,damage_amount_partial,sparse_damage_coverage
+            missing_amount=damage_amount_missing(actor,fight)
+            partial_amount=damage_amount_partial(actor,fight)
+            value=('—' if missing_amount else number(actor.get('dps'))+('*' if partial_amount else ''))+' /s';dps_font=self.ui_font(self.settings.get('dps_font_size',14),QFont.Weight.Bold)
             while dps_font.pointSize()>10 and QFontMetrics(dps_font).height()>row.height()-17:dps_font.setPointSize(dps_font.pointSize()-1)
             reserved=max(86,QFontMetrics(dps_font).horizontalAdvance(value)+14);left=row.left()+9
             painter.setFont(self.ui_font(9,QFont.Weight.DemiBold));painter.setPen(QColor(self.theme['bar_text']))
@@ -169,14 +181,16 @@ class DamageView(QWidget):
             painter.setFont(self.ui_font(8));painter.setPen(QColor(self.theme['bar_detail']))
             share=100*actor.get('damage',0)/total if total else 0
             description=(actor.get('class') or _tr('Klasse unbekannt'))+' · '+number(actor.get('damage'))+' '+unit
-            share_text=decimal(f'{share:.1f} %')
+            if missing_amount:description=(actor.get('class') or _tr('Klasse unbekannt'))+' · '+_tr('Kein Schaden erfasst')
+            if partial_amount:description=(actor.get('class') or _tr('Klasse unbekannt'))+' · '+_tr('Nur periodischer Schaden erfasst')
+            share_text='' if fight.get('tracking_scope')=='self' or fight.get('shares_unavailable') else '—' if missing_amount or sparse_damage_coverage(fight) else decimal(f'{share:.1f} %')
             description_width=max(0,row.right()-left-QFontMetrics(painter.font()).horizontalAdvance(share_text)-16)
             description=QFontMetrics(painter.font()).elidedText(description,Qt.TextElideMode.ElideRight,int(description_width))
             painter.drawText(QRectF(left,row.bottom()-17,description_width,15),Qt.AlignmentFlag.AlignLeft,description)
-            painter.drawText(QRectF(left,row.bottom()-17,row.width()-(left-row.left())-8,15),Qt.AlignmentFlag.AlignRight,decimal(f'{share:.1f} %'))
-            self.areas.append((row,actor['id']))
+            painter.drawText(QRectF(left,row.bottom()-17,row.width()-(left-row.left())-8,15),Qt.AlignmentFlag.AlignRight,share_text)
+            if not actor.get('provisional_membership'):self.areas.append((row,actor['id']))
         from .quality import quality_text
-        self.setToolTip(title+'\n'+'\n'.join(actor_label(a,fight,self.report)+' · '+(a.get('class') or _tr('Klasse unbekannt'))+' · '+equipment_text(a)+' · '+quality_text(a,fight) for a in actors)+_tr('\nSpieler anklicken: Fähigkeiten und Kampfanalyse. Mausrad: weitere Mitglieder. DPS und Anteile basieren auf dem beobachteten Kampf.\n')+_tr(NETWORK_TOOLTIP))
+        self.setToolTip((_tr('Entity-Zeilen mit ? · Gruppe unbestätigt; separat erfasst')+'\n' if fight.get('provisional_rows') else '')+title+'\n'+'\n'.join(actor_label(a,fight,self.report)+' · '+(a.get('class') or _tr('Klasse unbekannt'))+' · '+equipment_text(a)+' · '+quality_text(a,fight) for a in actors)+_tr('\nSpieler anklicken: Fähigkeiten und Kampfanalyse. Mausrad: weitere Mitglieder. DPS und Anteile basieren auf dem beobachteten Kampf.\n')+_tr(NETWORK_TOOLTIP))
     def draw_graph(self,painter,rect,fight):
         painter.setPen(QColor(self.theme['text']))
         painter.setFont(self.ui_font(10,QFont.Weight.Bold))

@@ -1,19 +1,47 @@
 [
   {
+    "path": ".github/workflows/windows-release.yml",
+    "sha256": "5bb3693f86f7bab89081b4f5b801d82aa3a64860d978dee82d589d7e9f530c4d"
+  },
+  {
     "path": ".gitignore",
     "sha256": "c8fa20cf951198600ea394bb2974f43bb402bd6e17071b29dd4535a0c52ba845"
+  },
+  {
+    "path": "CHANGELOG.de.md",
+    "sha256": "d10e070e87c9c6489ae31db108ce41fa98d080617337a606623b67ea9d38af90"
+  },
+  {
+    "path": "CHANGELOG.md",
+    "sha256": "e717450f328066b507f92f9bd569bb72cecb0bb386dec1a8c111e1a00eb3d8f2"
   },
   {
     "path": "docs/CATALOG.md",
     "sha256": "650e95f8a903c07d30d414279efb1b901649c6aff6750e1ff7e5b05386116b46"
   },
   {
+    "path": "docs/CODE-SIGNING.md",
+    "sha256": "05ceabbee4f035a26e521b32e07fb9cb6fbc9e11927dc59c6d3516523de4aacc"
+  },
+  {
     "path": "docs/PROVENANCE.md",
-    "sha256": "6379d53737d8572cc5a41d79917247c08ae117fb139a9f89a2d24a9fbee62e50"
+    "sha256": "5d01341a96705351f8258e087cfeb8231a4966204b10a354043819a4eb9b8d7f"
+  },
+  {
+    "path": "docs/SIGNING.de.md",
+    "sha256": "0a9616883fa10a9dfd7da12f3ea9be83728632a6c52182aa453df274739e6513"
+  },
+  {
+    "path": "LICENSE",
+    "sha256": "643d62995e5ea9d6ab5c05bc84597e0ad607bb113cb3eb97c34dbc9b565f4304"
   },
   {
     "path": "LICENSE-STATUS.md",
-    "sha256": "0f102be9af6072cee716860326f0af6866ab651bdb188cbb8e5f00a6b28396b7"
+    "sha256": "3eab54673a98f0f9755fa991d23983230f8d2c1d4b0066ff94a5cc9d5eb68845"
+  },
+  {
+    "path": "licenses/LGPL-3.0.txt",
+    "sha256": "e3a994d82e644b03a792a930f574002658412f62407f5fee083f2555c5f23118"
   },
   {
     "path": "licenses/REFERENCE-LICENSE.txt",
@@ -25,11 +53,11 @@
   },
   {
     "path": "meter/__init__.py",
-    "sha256": "d1bc3d6c76eb262f1868d955cd3d1a5c703f492f32b7e96961af9a998306e061"
+    "sha256": "cd83deca0794d66b53fbf537806bfe49b54d2283291bd159512b4ab82186fa2c"
   },
   {
     "path": "meter/__main__.py",
-    "sha256": "421c7de2cc54535b311d34f364a2fa5ad98f1105dba3fec317faa12e569ed0c7"
+    "sha256": "9875e87846ddcb09f5fa8d54f4e333e8c6f553ace3c4c64ad454f3339a4f83b3"
   },
   {
     "path": "meter/appearance.py",
@@ -44,12 +72,16 @@
     "sha256": "01a34e128cb839727a826ac96f1ed1dd35d5779805163d7f031f851ecc96dd3a"
   },
   {
+    "path": "meter/capture_inbox.py",
+    "sha256": "4163fb558a19e84724182efc1c990d5de36854cfc00429b6c143654eff86c879"
+  },
+  {
     "path": "meter/catalog_store.py",
     "sha256": "0729e134f3364f88b8eb756876193fc78335cc6a67bad56ee462992506793b35"
   },
   {
     "path": "meter/chat_export.py",
-    "sha256": "b7b261ab4ab0587b0619fc9bc2290defd7eab9967da0fe61de0519f4fd6ab7a2"
+    "sha256": "52960121b77fde0b52eaa0aabd856d049cbbb395f737e3c7b8ae569c213f4f56"
   },
   {
     "path": "meter/class_icons.py",
@@ -61,7 +93,7 @@
   },
   {
     "path": "meter/combat_logs.py",
-    "sha256": "7d2fc10330a586011dfee35a7a90b0277f05d5d4c5da2e84b0b281bf540fd090"
+    "sha256": "b6e1f76146c7c175809df98fa154e835f742400eb50e1b5f3b518c82e60fc615"
   },
   {
     "path": "meter/comparison.py",
@@ -73,7 +105,7 @@
   },
   {
     "path": "meter/core/activity.py",
-    "sha256": "d4413285f4c2ac2b9c05b0270a9709de22c5bb7f0bad6f76bc7920bb7fb5cce6"
+    "sha256": "93aaad33233e6e16bf9e4d30d81e5e4cadb908d8c48f412ffa71cafba354de53"
   },
   {
     "path": "meter/core/binary.py",
@@ -81,15 +113,19 @@
   },
   {
     "path": "meter/core/combat.py",
-    "sha256": "57e3ebf1ba48b7518ce993934411795dddaa860bf8c4588bc2495e0956e72f66"
+    "sha256": "5ccbae3e8dcbaf2ea822855b453a08ad24d906c157d314e7d3b9b28492a0bad9"
   },
   {
     "path": "meter/core/damage.py",
-    "sha256": "e939384819c754e91b08b1e5e70c34a62af489aa5e668c6326a929b7085f57fe"
+    "sha256": "9aee3e782ae2aa0d3c68d51cd4e3a21ec2a66dd7c1f9f742adc400860dbb73df"
   },
   {
     "path": "meter/core/damage_sections.py",
     "sha256": "761751e93567abb6987a71b39c49b3b39e43b32f40c6cd31f2319d05a5438634"
+  },
+  {
+    "path": "meter/core/deferred_damage.py",
+    "sha256": "ca9f10e3beca58e4635af223037b40b2861f46a7ad03d31ac71a4d505c93ad99"
   },
   {
     "path": "meter/core/encounters.py",
@@ -104,12 +140,20 @@
     "sha256": "3a48730c37a6a27276e35ebab67c1cb7bc723820dd735fdd68d5190e9e680b8f"
   },
   {
+    "path": "meter/core/hit_notice.py",
+    "sha256": "63145a6827e2a6901e79bc979c56820eaf2b9a52c7637408148f16f5941e2053"
+  },
+  {
+    "path": "meter/core/listed_buffs.py",
+    "sha256": "bb3205e3b37fb9ad23c9ebd98a410152a1fbb85caf3ae1f2b7da0d6b5913bbc9"
+  },
+  {
     "path": "meter/core/local_identity.py",
     "sha256": "dd54005f3443bc8a485c9c96032b36bf2448eac4b21552eb1e88d7fd8efb65a0"
   },
   {
     "path": "meter/core/login_group.py",
-    "sha256": "fc1d1c3079f643fa016057ad258f303f910c2cc15c770b5c721a5be86be970d4"
+    "sha256": "a25f8f67dcee9396eb3c0ab623e2f640e31e849fd0c3749500062cecd932d219"
   },
   {
     "path": "meter/core/network.py",
@@ -121,7 +165,11 @@
   },
   {
     "path": "meter/core/parser.py",
-    "sha256": "351ef1a7b332840cf1e3d9261e3e1d77ebce7061b0916663b2d5dad72b62e22f"
+    "sha256": "0a330a90767f31c92ff2f02b11505d1e272f16e445826f8cd82678ce3fca3486"
+  },
+  {
+    "path": "meter/core/party_status.py",
+    "sha256": "482729efd808fb2f5171f576220be34321f39d072992575ddf2c2aedbcd61ad3"
   },
   {
     "path": "meter/core/pcap.py",
@@ -133,11 +181,11 @@
   },
   {
     "path": "meter/core/session.py",
-    "sha256": "81dd550e7ad85b95dc8d4a96f9cbdabab3eeccce17a79e257cc507ec0a29283a"
+    "sha256": "b16e5ac04907caf6e7a778309de61cce0f7c47fbb8e11da5d1f24a629c7fd4b9"
   },
   {
     "path": "meter/core/skill_labels.py",
-    "sha256": "b61ac2e2ea67fea3ec5e4da2af0313caab1a5341266de71e57b034e361e6b42f"
+    "sha256": "bda7e0c4b0a2872e7a880bfaef9a6f283ae581ba3912fc7d844ab6f456b46e43"
   },
   {
     "path": "meter/core/skill_observations.py",
@@ -149,7 +197,7 @@
   },
   {
     "path": "meter/core/state.py",
-    "sha256": "6a04288e0aca1b603361de4e5bbf6dd180922b2e4831c373084f9b96b5ed6128"
+    "sha256": "3d46b9f647a42d4fbe7c3d459cf87816ad441357a12a738d7800b59108b5e165"
   },
   {
     "path": "meter/core/summons.py",
@@ -160,8 +208,12 @@
     "sha256": "f489c0c81c36a9173cf4972991de851805737df1de8c1a1486da56a96312af10"
   },
   {
+    "path": "meter/core/unassigned.py",
+    "sha256": "6f85f14d368506b5b4478bb3d0922a27fb1b51616c729b204857a9e8e5378bd3"
+  },
+  {
     "path": "meter/dashboard.py",
-    "sha256": "4f0e9b40f94f8574204d1941a420ca27c2bad3ad8af4fb4510a9e1a1d2c5194c"
+    "sha256": "8ce1803b14d5882383a79357c401805cdb15749a4ace6ec6c965d4d213d8d54e"
   },
   {
     "path": "meter/data/buff_labels.json",
@@ -177,7 +229,7 @@
   },
   {
     "path": "meter/data/periodic_skills.json",
-    "sha256": "510818b8d4c2a7a7fd1cdb45d44438ddab236542e88e43c0c758feda15225e5d"
+    "sha256": "a14074e43286b1eda7362303375375b329c6eca90a87c720e8d0b24a25030f55"
   },
   {
     "path": "meter/data/pets.json",
@@ -189,15 +241,19 @@
   },
   {
     "path": "meter/data/ui_en.json",
-    "sha256": "634c7c7337ef6946da681a3c5242f39ccfadf176a0e39d0bcc380f199bc7d867"
+    "sha256": "1cf653d961da020fc09ce0d31767f2288e5369952d1de331868424219807cdd6"
   },
   {
     "path": "meter/details.py",
-    "sha256": "a62c5fa811e34aefd1ea20ef1df2d084f353804d937ea94c266c6d4c6da82668"
+    "sha256": "5486ae2aa6a70a272ad5bbb741e546767c88c576687e41f109f438cc3977ceda"
   },
   {
     "path": "meter/diagnostics.py",
     "sha256": "96ffd7f0c24218496e9210b81ec548341ec2bac65997e527bd82e1a2c7be5b2f"
+  },
+  {
+    "path": "meter/distribution_check.py",
+    "sha256": "0c3cc844416e70f9618e9c6c7ac5118584dd87d7f041435ea84d210caabe16d2"
   },
   {
     "path": "meter/dungeon_export.py",
@@ -217,11 +273,11 @@
   },
   {
     "path": "meter/event_overlay.py",
-    "sha256": "0878cbd42837bec63871edc1bc456f1b1bad1472323b89740911d5be90082acc"
+    "sha256": "4d2f50e16e34a858c37dc3b64fcd9425a35800842bfc0e7bcd8deb04e65cc6aa"
   },
   {
     "path": "meter/events.py",
-    "sha256": "5ec7756798f63a259ea188d8e3bb64754254f99845bb2b13d390c4ad5f8fa4c4"
+    "sha256": "136dec2e884fdfb9d0ffc1cf074fa2cb7e11f105bcb95aa5dde4ac2f68849366"
   },
   {
     "path": "meter/export_job.py",
@@ -230,6 +286,10 @@
   {
     "path": "meter/game_window.py",
     "sha256": "28451ee6658555de51d720e93e4b7fe43fb6bba13d2288819a547a7616131ebf"
+  },
+  {
+    "path": "meter/group_identity.py",
+    "sha256": "84d21b08182097e004ffe98305cd0e8ef77e2e00b0bfe555f1cb539fa0cfbaf8"
   },
   {
     "path": "meter/healing.py",
@@ -253,11 +313,19 @@
   },
   {
     "path": "meter/metrics.py",
-    "sha256": "c38b8ef5f8984a5fd3eb78ea1a575636d32f1bece3bcc1cf48700b0b337bf86c"
+    "sha256": "cc2a7b569c4118def935415b35b40172848c32c4abd3d1900ca5e160e7408886"
+  },
+  {
+    "path": "meter/observation_quality.py",
+    "sha256": "8bb26d1caf5aeb25f8c2f32be632525acad64f72cbc1199930cdf5ddd88b734f"
   },
   {
     "path": "meter/overlay.py",
-    "sha256": "f00bf5edbe8010e3b34d94e5dbe4d702a8bb1f603eb3f200af0994cd3491d880"
+    "sha256": "92dd75a85802a3450426a494bb4d14f06c28a31e3a4420fb15a9f5c17d137be6"
+  },
+  {
+    "path": "meter/personal_boss.py",
+    "sha256": "a970ff2fdb34e51005f9ab0edf8eb868d1d734618b05b4101ebe45ab6f1cfd02"
   },
   {
     "path": "meter/pets.py",
@@ -265,11 +333,11 @@
   },
   {
     "path": "meter/preferences.py",
-    "sha256": "ee9c13e9fcbfc8bea30a26b432f40aaea9e68967919fc23623a6036f05b9942c"
+    "sha256": "7f126185838c10859d3c67582e546e8a2be54ce941aba3b3697340a83ba773ca"
   },
   {
     "path": "meter/quality.py",
-    "sha256": "6094675fbc167d5860955cf2527c16955b026065cef4f8209fabc0a6fcc31d20"
+    "sha256": "d5c1b1213b6559c99edd52da8c6e47823ae00efeedb6cda539d97543c58daa0e"
   },
   {
     "path": "meter/quality_dialog.py",
@@ -277,7 +345,7 @@
   },
   {
     "path": "meter/recording.py",
-    "sha256": "568d0e8a0211db48bd5ef1f649bea10f888b12192ee69fd8470123ea182d1a03"
+    "sha256": "703acb958ce49b6aaa447a4dadf5bc2d138b577e4dd1a55862f2b1c9869c6475"
   },
   {
     "path": "meter/rune_display.py",
@@ -289,19 +357,31 @@
   },
   {
     "path": "meter/support_export.py",
-    "sha256": "46e5fbe273032d69897f811165214054a9748bdd52e237db3d973435e116573f"
+    "sha256": "a3283d96f512437c96ee9dee65bb97c1660cdaf40e182616d2e3bf8800f41fc4"
+  },
+  {
+    "path": "meter/unassigned_view.py",
+    "sha256": "555ba771b328148b9a451487b6732444887556491f6f2e2aaeebb66871388941"
+  },
+  {
+    "path": "meter/update_dialog.py",
+    "sha256": "2e2c9e3acdab0badc122b747e236e5d77565a55d5003311683d9be0499252daf"
+  },
+  {
+    "path": "meter/updates.py",
+    "sha256": "cb5240bcaf93a8d01ebc7381ff79853cf0c4e6087051c16d3e1882a8dbb163f1"
   },
   {
     "path": "meter/worker.py",
-    "sha256": "b49ccde767ca59ddff9f0c2dc18dce45abd6b661646d3acbe92f8a87281b67b2"
+    "sha256": "10b85b3f1d1c65059268e9b0b56084fd6d8c184e37df17571e92de5d5d4da3cb"
   },
   {
     "path": "README.de.md",
-    "sha256": "d45d2a4a5961f919433d541168ee17e178bffb1c973ae9bdaa48fef6577d484f"
+    "sha256": "7cdd1e2eb33e9fb34c51f0e0580b17ad27b7c7f360b45f62b97d1838b1d23a0d"
   },
   {
     "path": "README.md",
-    "sha256": "373d03739e1ec1b07cb574244c3753a7f451d39d39b07fd378cfe65eded1eb5a"
+    "sha256": "59e3196864e819fe92623fe2cc2f8e53e003b69ea0791eb33a3a26ae90cf2486"
   },
   {
     "path": "requirements.txt",
@@ -316,6 +396,10 @@
     "sha256": "24e854b7b7bab13914e2ab9a88d84b9b0735f805154b8c2a2999f765dd661df0"
   },
   {
+    "path": "signing/artifact-configuration.xml",
+    "sha256": "4ed0dcf1bbf0415c8cb4d18322dab99e8e9c34b54fd37c5aa85542420201c3cd"
+  },
+  {
     "path": "Start-Meter.cmd",
     "sha256": "adc4763e9cd59bfdfdb6d83177ef0748ca6eb61c0c30d97daf869f0100d4cb11"
   },
@@ -325,6 +409,22 @@
   },
   {
     "path": "THIRD-PARTY-NOTICES.md",
-    "sha256": "fa943bd4cf89b3abe480fdc8514b8e6aafd5c2ca43c7cc87e982083ec39a4b82"
+    "sha256": "c88e271ea4e2d8c6afa63328408035e9d8935ebbebf7c20d9e69765d6193427b"
+  },
+  {
+    "path": "tools/build_windows.py",
+    "sha256": "096503f09faa835de82f402c9ef230d8c5752cd3038951a91156e10dd89d16af"
+  },
+  {
+    "path": "tools/finalize_windows.py",
+    "sha256": "9ccae2d56463611d4c35aa474344d915094ebbf39993b7978adee9726c10f0a1"
+  },
+  {
+    "path": "tools/frozen_entry.py",
+    "sha256": "833def5c59a996fb81a756289b2827ab1e2d584e0b64dab2fde27c213b42092c"
+  },
+  {
+    "path": "tools/requirements-build.txt",
+    "sha256": "e4844211dcb381b52e184ae64c83008bf4e283eb580898333a22d41902e43ecd"
   }
 ]

@@ -4,6 +4,8 @@ from .language import TranslatedDict
 METRICS=TranslatedDict({'damage':'Schaden','healing':'Heilung','other_healing':'Fremdheilung','self_healing':'Selbstheilung'})
 
 def metric_report(report,metric='damage'):
+    from .personal_boss import personal_report
+    report=personal_report(report)
     from .healing import observed_amount
     if metric not in METRICS or metric=='damage':return report
     result={**report,'fights':[]}

@@ -143,12 +143,16 @@ def periodic_message(payload,policy):
     try:
         fields=periodic_fields(payload)
         if fields.effect==8:return Decision('ignored',reason='non-damage periodic marker')
-        if len(fields.values)!=1:
-            return Decision('unclassified',reason='two periodic values need gameplay meaning')
+        if len(fields.values)!=1 and not (fields.effect==11 and len(fields.values)==2):
+            return Decision('unclassified',reason='unsupported periodic value count')
         amount=fields.values[0]
         if fields.effect in (1,9,11):kind='heal'
         elif fields.source==fields.target or not policy.damage_dot(fields.skill):
             return Decision('unclassified',reason='periodic damage skill not confirmed')
         else:kind='damage'
-        return Decision('accepted',(Hit(fields.source,fields.target,fields.skill,amount,kind=kind,periodic=True),))
+        # Reference PacketParser.ParseDot reads the first amount for heal effect 0B.
+        # Its second validated field is retained as opaque, never added or
+        # described as effective healing, overheal, HP or MP.
+        auxiliary=fields.values[1] if len(fields.values)==2 else None
+        return Decision('accepted',(Hit(fields.source,fields.target,fields.skill,amount,kind=kind,periodic=True,supplementary=auxiliary),))
     except InvalidData as error:return Decision('rejected',reason=str(error))

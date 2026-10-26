@@ -25,14 +25,19 @@ def member(payload,allowed_flags=(0,3)):
     uuid=c.take(36)
     if not re.fullmatch(rb'[0-9A-Fa-f]{8}(?:-[0-9A-Fa-f]{4}){3}-[0-9A-Fa-f]{12}',uuid):raise InvalidData('login member uuid')
     identifier=c.uint(8);server=identifier>>48
-    if server!=record_server or not identifier&((1<<48)-1):raise InvalidData('login member character id')
+    # Cross-server raid update: routing server 2313, character home server
+    # 2316. Both are explicit fields; routing equality is not an identity rule.
+    if not 1000<=server<3000 or not identifier&((1<<48)-1):raise InvalidData('login member character id')
+    if server!=record_server and not 1000<=record_server<3000:raise InvalidData('login member routing server')
     name=text(c,c.uint(1));class_id=c.uint(4);cls=wire_class(class_id)
     if not cls:raise InvalidData('login member class')
     c.variable();c.variable() # observed current/max HP, not combat events
     # Bounded 19 October party/raid records also carry status 02 and 04.
     # These are opaque social metadata, not damage or presence guarantees.
     if not 24<=c.remaining<=256 or payload[-1] not in (0,1,2,3,4,5):raise InvalidData('login member tail')
-    return {'id':entity,'slot':slot,'character_id':identifier,'name':name,'server':server,'class_id':class_id,'class':cls}
+    row={'id':entity,'slot':slot,'character_id':identifier,'name':name,'server':server,'class_id':class_id,'class':cls}
+    if server!=record_server:row.update(routing_server=record_server,instance_server=instance_server)
+    return row
 
 def members(payload,count):
     # A record has an exact UUID marker six bytes after its start. Require a
@@ -43,7 +48,9 @@ def members(payload,count):
     starts=[m.start()-10 for m in re.finditer(rb'\x24[0-9A-Fa-f]{8}(?:-[0-9A-Fa-f]{4}){3}-[0-9A-Fa-f]{12}',payload) if m.start()>=10]
     if len(starts)!=count or not starts or starts[0]!=0:raise InvalidData('login roster record boundaries')
     ends=starts[1:]+[len(payload)]
-    rows=tuple(member(payload[a:b]) for a,b in zip(starts,ends))
+    # Snapshot records on 22 October use mask 04 for the local row.
+    # Updates keep their separately validated flag sets.
+    rows=tuple(member(payload[a:b],allowed_flags=(0,3,4)) for a,b in zip(starts,ends))
     if len({r['slot'] for r in rows})!=count:raise InvalidData('login roster duplicate slot')
     ids=[r['id'] for r in rows if r['id']]
     if len(set(ids))!=len(ids) or len({r['character_id'] for r in rows})!=count:raise InvalidData('login roster duplicate identity')
@@ -53,7 +60,7 @@ def snapshot(op,payload):
     if len(payload)>8192:raise InvalidData('login roster body limit')
     c=Cursor(payload)
     prefix=c.uint(1)
-    if prefix not in (0,9) or (prefix==9 and op!=bytes.fromhex('0092')):raise InvalidData('login roster prefix')
+    if prefix not in (0,1,9) or (prefix in (1,9) and op!=bytes.fromhex('0092')):raise InvalidData('login roster prefix')
     key=c.uint(8)
     if not key:raise InvalidData('login roster key')
     if op==bytes.fromhex('0092'):
@@ -66,13 +73,22 @@ def snapshot(op,payload):
             # or assume that all five capacity slots contain players.
             extension=c.take(130)
             if not leader or extension[0]!=0 or extension[9:13]!=(5).to_bytes(4,'little') or any(extension[13:]):raise InvalidData('extended login party block')
+        if prefix==1:
+            # 22 October: exact nine-byte extension before the count, repeated
+            # for the same party while it shrinks from two members to one.
+            # The u64 is opaque; no roster scanning or entity inference.
+            if c.uint(1)!=0 or c.uint(8)==0:raise InvalidData('short login party block')
         count=c.uint(1);own_group=key;capacity=5;declared_groups=1
         trailers=(1,3,5) if leader else (3,5,9)
         # 19 October: a zero-leader, one-member snapshot ends in 06 and is
         # immediately corroborated by an own-member update. Keep this narrow;
         # the parser still requires matching live local identity metadata.
-        if not leader and count==1:trailers=trailers+(6,)
+        # 23 October: the same exact zero-leader envelope also carries four
+        # complete member records and trailer 06; own live proof still required.
+        if not leader and count in (1,4):trailers=trailers+(6,)
         if leader and count==1:trailers=trailers+(0,)
+        # 08:03 capture: exact four-member leader snapshot has trailer 0c.
+        if leader and count==4:trailers=trailers+(12,)
         if not 1<=count<=5 or payload[-1] not in trailers:raise InvalidData('login roster count/trailer')
         rows=members(payload[c.position:-1],count)
         if leader and leader not in {r['character_id'] for r in rows}:raise InvalidData('login party leader missing')
@@ -126,6 +142,22 @@ class LoginMembership:
         ids=[r['id'] for r in candidate.values() if r['id']]
         if len(set(ids))!=len(ids) or len({r['character_id'] for r in candidate.values()})!=len(candidate):raise InvalidData('login member duplicate identity')
         self.rows=candidate
+    def rebase_zone(self,generation):
+        # Membership survives a zone transition; live entity IDs do not.
+        from dataclasses import replace
+        rows=tuple({**row,'id':0} for row in self.rows.values())
+        return LoginMembership(replace(self.snapshot,rows=rows),generation)
+    def replace_own_group(self,record):
+        if not self.snapshot.raid or record.raid or record.key!=self.snapshot.own_group:
+            raise InvalidData('login subgroup snapshot mismatch')
+        from dataclasses import replace
+        candidate={key:row for key,row in self.rows.items() if key[0]!=record.key}
+        for row in record.rows:
+            candidate[record.key,row['slot']]={**row,'login_group_key':record.key}
+        ids=[r['id'] for r in candidate.values() if r['id']]
+        if len(candidate)>20 or len(ids)!=len(set(ids)) or len({r['character_id'] for r in candidate.values()})!=len(candidate):
+            raise InvalidData('login subgroup duplicate identity')
+        return LoginMembership(replace(self.snapshot,rows=tuple(candidate.values())),self.generation)
     def complete(self):
         return len(self.rows)==self.snapshot.capacity or (self.snapshot.raid and self.snapshot.declared_groups==4)
 

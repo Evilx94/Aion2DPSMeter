@@ -58,6 +58,7 @@ class Session:
         if self.decoder:self.decoder.reset()
     def conflict(self):
         offsets=self.stream.conflict_offsets if self.stream else set()
+        self.ledger.unassigned.conflict(offsets)
         affected=set();mapped=False;header_conflict=False
         for start,end,header_end,identifiers in self.frame_consumers:
             matching=[at for at in offsets if start<=at<end]
@@ -90,6 +91,8 @@ class Session:
         generation=self.ledger.world.generation
         count=len(self.ledger.active);closed_count=self.ledger.sequence;issues=dict(self.ledger.issues)
         activity_revision=self.ledger.activity_revision
+        deferred_revision=self.ledger.deferred_damage.revision
+        unassigned_serial=self.ledger.unassigned.serial
         result=self.parser.accept(message,time)
         if generation!=self.ledger.world.generation:
             self.dependencies.clear();self.activity_dependencies.clear();self.local_proofs.clear()
@@ -100,7 +103,12 @@ class Session:
         after=self.ledger.sequence+1 if self.ledger.active else None
         changed=(len(self.ledger.active)!=count or self.ledger.sequence!=closed_count or dict(self.ledger.issues)!=issues or self.ledger.activity_revision!=activity_revision)
         identifiers={x for x in (before,after) if x is not None} if changed else set()
+        if self.ledger.deferred_damage.revision!=deferred_revision:
+            identifiers.update(self.ledger.deferred_damage.recovered)
+            self.ledger.deferred_damage.recovered.clear()
+            if self.ledger.active:identifiers.add(self.ledger.sequence+1)
         start,end=self.decoder.frame_span
+        self.ledger.unassigned.bind_frames(unassigned_serial,start,end)
         if self.frame_consumers and self.frame_consumers[-1][0:2]==(start,end):
             self.frame_consumers[-1][3].update(identifiers)
         else:self.frame_consumers.append((start,end,self.decoder.frame_header_end,identifiers))
@@ -117,14 +125,20 @@ class Session:
         if message.opcode in (bytes.fromhex('0092'),bytes.fromhex('0296'),bytes.fromhex('0d92'),bytes.fromhex('0a96')) and result is not None:
             member_id=result.get('id') if isinstance(result,dict) else 'snapshot'
             self.dependencies[('login_group',message.opcode,member_id)]=(start,end,self.frame_consumers[-1][3])
+        if message.opcode==bytes.fromhex('1c92') and result is not None:
+            self.dependencies[('login_group',message.opcode,result.character_id)]=(start,end,self.frame_consumers[-1][3])
         if message.opcode in (bytes([69,54]),bytes([68,54])) and type(result) is int:
             self.dependencies[('player',result)]=(start,end,self.frame_consumers[-1][3])
         if message.opcode==bytes([65,54]) and result is not None and hasattr(result,'entity'):
             self.dependencies[('summon',result.entity)]=(start,end,self.frame_consumers[-1][3])
             if len(self.dependencies)>2050:
                 oldest=next(k for k in self.dependencies if isinstance(k,tuple));self.dependencies.pop(oldest)
-        if message.opcode==bytes.fromhex('0238') and result is not None and hasattr(result,'actor') and self.ledger.world.authorized(result.actor) and self.ledger.world.resolve(result.actor)==result.actor:
-            key=('cast',result.actor);self.dependencies[key]=(start,end,self.frame_consumers[-1][3])
+        if self.parser.listed_activity:
+            entity=self.parser.listed_activity[0].entity;key=('buff_list',entity)
+            self.dependencies[key]=(start,end,self.frame_consumers[-1][3])
+            self.activity_dependencies.setdefault(entity,set()).add(key)
+        if message.opcode in (bytes.fromhex('0238'),bytes.fromhex('0338')) and result is not None and hasattr(result,'actor') and self.ledger.world.authorized(result.actor) and self.ledger.world.resolve(result.actor)==result.actor:
+            key=('cast' if message.opcode==bytes.fromhex('0238') else 'hit_notice',result.actor);self.dependencies[key]=(start,end,self.frame_consumers[-1][3])
             actor=self.ledger.world.resolve(result.actor);self.activity_dependencies.setdefault(actor,set()).add(key)
         if message.opcode in (bytes.fromhex('2a38'),bytes.fromhex('2b38'),bytes.fromhex('2c38')) and result is not None and self.ledger.world.authorized(result.entity):
             key=('buff',result.entity,result.instance);self.dependencies[key]=(start,end,self.frame_consumers[-1][3])
@@ -215,16 +229,21 @@ class Session:
         for fight in fights:
             for row in fight.get('skills',[]):label_row(row,self.skill_labels)
             for row in fight.get('cast_usage',[]):label_row(row,self.skill_labels)
+            from .skill_labels import label_buff_row
+            for row in fight.get('buffs',[]):label_buff_row(row,self.skill_labels)
         latest=fights[-1] if fights else {}
         transport=self.transport_totals+(self.stream.stats if self.stream else Counter())
         network=self.network.snapshot(now_ms)
         network.update(capture_gap_bytes=transport['gap_bytes'],capture_gaps=transport['gap_events'])
+        from ..group_identity import identity_status
         return {'fights':fights,'scope':'self_and_party' if self.ledger.party_only else 'all','network':network,
                 'partial':self.partial,'messages':sum(self.parser.counts.values()),'decisions':dict(self.parser.decisions),
                 'parser_errors':dict(self.parser.errors),'packets':self.stats['packets'],
                 'self_id':world.self_entity,'map_id':self.parser.map_id,'party_trusted':world.party_trusted,
                 'group_state':('invalid' if not world.party_trusted else ('missing' if not world.party_known else ('partial' if not world.party_complete else ('members' if world.party_records else 'solo')))),
                 'roster':[dict(m) for m in world.party_records],
+                'group_identity':identity_status(world),
+                'group_membership_source':world.party_source,
                 'party_entities':[{'id':actor,'name':link[0],'server':link[1]} for actor,link in world.party_links.items()],
                 'identity_candidates':[{'id':p.entity,'name':p.name,'class':p.class_name} for p in world.people.values()],
                 'self_identity':{'id':world.self_entity,'name':own.name if own else '', 'server':own.server if own else 0,

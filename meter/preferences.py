@@ -5,10 +5,10 @@ from copy import deepcopy
 from .events import defaults as event_defaults
 
 DEFAULTS={'archive_combat_days':0,'archive_capture_days':0,'display_metric':'damage','palette':'Klassenfarben','opacity':88,'graph_opacity':88,'overlay':False,'graph_overlay':False,
-          'language':'en','appearance':{},'event_timezone':'Europe/Berlin','event_schedule_timezone':'Europe/Berlin',
+          'update_prereleases':False,'language':'en','appearance':{},'event_timezone':'Europe/Berlin','event_schedule_timezone':'Europe/Berlin',
           'dungeon_scope':'all','pets_owned':[],
           'event_overlay':False,'event_opacity':88,'event_attached':False,'event_locked':False,'event_position':[],
-          'event_free_position':[],'event_size':[300,125],'event_schedule':event_defaults(),'event_layout':0,'event_shop_timer_added':False,'event_fixed_bosses_added':False,
+          'event_free_position':[],'event_size':[300,125],'event_schedule':event_defaults(),'event_layout':0,'event_shop_timer_added':False,'event_fixed_bosses_added':False,'event_utc_resets_added':False,
           'attached':False,'attachment_mode':'Frei schwebend','click_through':False,'save_combat':True,'save_packets':False,
           'save_debug':True,'log_folder':'','character_name':'','character_identity':{},'manual_identity':False,'accent':'#71ddc4','class_colors':{},'dps_position':[],'graph_position':[],
           'dps_free_position':[],'graph_free_position':[],'dps_size':[350,260],'graph_size':[350,220],
@@ -35,10 +35,12 @@ class Preferences:
         except (OSError,ValueError):pass
         loaded_schedule=deepcopy(self.values['event_schedule'])
         loaded_fixed_bosses=self.values['event_fixed_bosses_added']
+        loaded_utc_resets=self.values['event_utc_resets_added']
         self.validate();self._saved=deepcopy(self.values)
         # Keep schedule migrations dirty so disk merging cannot undo them.
         self._saved['event_schedule']=loaded_schedule
         self._saved['event_fixed_bosses_added']=loaded_fixed_bosses
+        self._saved['event_utc_resets_added']=loaded_utc_resets
     def validate(self):
         import math
         from .appearance import clean_appearance,valid_color
@@ -68,6 +70,15 @@ class Preferences:
             if not any(row['id']=='black_cloud_merchant' for row in rows) and len(rows)<60:
                 rows.append(merchant_event())
             self.values['event_shop_timer_added']=True
+        if not self.values['event_utc_resets_added']:
+            from .events import reset_events
+            rows=self.values['event_schedule'];existing={row['id'] for row in rows}
+            # Add resets once to a standard plan; keep custom/empty plans and
+            # deliberate removals intact. Existing user reset times win.
+            if existing & {'shugo','rift','siege','kaira'}:
+                for row in reset_events():
+                    if row['id'] not in existing and len(rows)<60:rows.append(row)
+            self.values['event_utc_resets_added']=True
         from .language import migrate_event_names
         self.values['event_schedule']=migrate_event_names(self.values['event_schedule'])
         self.values['pets_owned']=sorted({key for key in self.values['pets_owned'] if isinstance(key,str) and 0<len(key)<=160})[:500]

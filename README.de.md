@@ -1,9 +1,46 @@
-# Aion2Meter · 0.1.0 Beta
+# Aion2Meter · 1.0.0
 
 [English](README.md) | **Deutsch**
 
 Ein Live-Meter für Schaden und Heilung in AION 2 unter Windows.
 Die Oberfläche ist auf Englisch und Deutsch verfügbar.
+
+
+## Neu in 1.0
+
+[Alle Änderungen](CHANGELOG.de.md) · [English](CHANGELOG.md)
+
+UTC-Resets und regionale Eventzeiten sind getrennt: Daily-/Weekly-Reset bleiben
+bei 07:00 UTC (Berlin: 08:00 CET / 09:00 CEST). In **Clock settings → Events**
+kann jeder Event eine eigene Zeitzone erhalten; ohne Eintrag gilt die Plan-Zone.
+Andere regionale Zeiten werden nicht allein wegen des Daily Resets verschoben.
+
+Zum Aktualisieren das alte Meter schließen, dieses ZIP in einen neuen Ordner
+entpacken und dort starten. Einstellungen und Logs unter LocalAppData bleiben
+erhalten. Bei fehlenden Abhängigkeiten zuerst `Setup-Meter.cmd` ausführen.
+
+
+## Updates
+
+Im Hauptfenster **Updates → Nach Updates suchen** öffnen. Erst nach deinem
+Klick fragt das Meter die öffentlichen Releases von `Evilx94/Aion2DPSMeter` ab.
+Beta-Releases lassen sich ein-/ausschließen; ältere veröffentlichte Versionen
+werden nicht als Downgrade angeboten. Kein Login, keine automatische Abfrage
+beim Start und kein Upload von Logs oder Einstellungen.
+
+Bei einem neueren passenden Paket prüft **Herunterladen und prüfen** dessen
+SHA-256 (GitHub-Asset-Digest oder angehängte `.zip.sha256`), Dateimanifest und
+ZIP-Pfade. Anschließend liegt es unter LocalAppData/Aion2Meter/updates bereit.
+Eine Prüfsumme ersetzt nicht das Vertrauen in Repository und Herausgeber.
+Fehlt die Prüfsumme oder ist sie ungültig, bleibt der integrierte Download
+gesperrt; die GitHub-Release-Seite kann weiterhin geöffnet werden.
+
+**Vorbereitetes Update öffnen** öffnet den geprüften Ordner. Vor dem Wechsel
+das Meter schließen, im neuen Quellcode-Ordner gegebenenfalls Setup-Meter.cmd
+ausführen und den alten Ordner als Backup behalten. Laufendes Programm,
+Einstellungen, Logs und Python werden nicht automatisch ersetzt. Der automatische
+Programmaustausch ist in 1.0 noch nicht enthalten; die Update-Ansicht bietet
+manuelle Prüfung und verifizierte Paketvorbereitung.
 
 ## Funktionen
 
@@ -127,7 +164,7 @@ Die Event-Zeiten sind bearbeitbar und verwenden standardmäßig Europe/Berlin (M
 | `No module named scapy` oder `PySide6` | Schritt 4 wiederholen. Bei manueller Installation `.venv\Scripts\python.exe` aus dem entpackten Meter-Ordner verwenden. |
 | Das Fenster schließt sich oder es erscheint nichts | PowerShell im Meter-Ordner öffnen und `.\.venv\Scripts\python.exe -m meter` ausführen, damit der Fehler sichtbar bleibt. |
 | Erfassung nicht verfügbar oder Zugriff verweigert | Npcap-Installation, eventuell erforderlichen Neustart und Administratorzugriff prüfen. Siehe [Npcap-Anleitung](https://npcap.com/guide/npcap-users-guide.html). |
-| Nur der eigene Charakter erscheint | Das Meter wartet möglicherweise auf eine neue Gruppen-/Raidmeldung. Ein Gruppen- oder Gebietswechsel kann sie liefern; frühere Mitgliedschaft lässt sich nicht immer nachträglich erkennen. |
+| Nur der eigene Charakter erscheint | Mitgliederliste und aktuelle Spieler-Identitäten müssen vorliegen. Namen können bereits bekannt sein, während die Entity-Zuordnung noch fehlt. Gruppen-/Gebietswechsel können neue Meldungen liefern; ein Neustart im Kampf kann weiterhin nur dich oder einzelne Mitglieder erfassen. |
 | Ein angeheftetes Overlay verschwindet außerhalb von AION 2 | Das ist vorgesehen. Deaktiviere das Anheften in den Einstellungen, wenn das Overlay frei schwebend sichtbar bleiben soll. |
 
 Einstellungen, Kampflogs und optionale Paketmitschnitte liegen getrennt vom
@@ -151,10 +188,25 @@ in der Entwicklerversion. Siehe [Kataloge](docs/CATALOG.md),
 und [Lizenzstatus](LICENSE-STATUS.md). Die ursprünglichen Referenzhinweise
 und Lizenztexte liegen im Ordner `licenses`.
 
-## Bekannte Einschränkungen der Beta
+## Bekannte Einschränkungen
 
-Worldboss-/Open-World-Auswertungen und die Gruppenerkennung bei spätem Start
-können unvollständig sein. Erfassungslücken und Teilausschnitte werden markiert.
+World- und Abyss-Bosse zeigen nur deinen eigenen beobachteten Schaden/DPS,
+einschließlich zugeordneter Begleiter und periodischem Schaden. Direkte
+Schadensbeträge anderer Spieler stehen dort nicht zuverlässig zur Verfügung;
+deshalb gibt es dort keine Gruppen-/Raidrangliste oder Schadensanteile.
+Dungeon- und normale Gruppenkämpfe behalten ihre Gruppenauswertung.
+Für DPS gilt weiterhin die erfasste Kampfdauer. Alte Gruppenkurven werden
+ausgeblendet, wenn keine eigene Zeitreihe vorliegt.
+Die Gruppenerkennung bei spätem Start kann weiterhin unvollständig sein.
+Beim späten Start können beobachtete, noch nicht zugeordnete Schadensquellen
+in der Dungeon-/PvE-Balkenanzeige als `Sorcerer · Entity 1234 · ?` mit ihrem
+erfassten Schaden/DPS erscheinen. Das `?` kennzeichnet eine unbestätigte
+Gruppenzugehörigkeit. Diese Zeilen verändern weder bestätigte Gruppensummen
+noch Gruppengraph oder Chattext; Prozentanteile werden dabei ausgeblendet.
+Eine spätere eindeutige Identitätsmeldung ergänzt den Namen. Spieler derselben
+Klasse bleiben über ihre Entity-IDs getrennt.
+
+Erfassungslücken und Teilausschnitte werden markiert.
 Einige Skillvarianten, Buffs und Karten sind noch unbenannt; eine numerisch
 abgeleitete Zuordnung ist keine exakte Einzelbestätigung.
 
@@ -169,6 +221,12 @@ Der mitgelieferte Setup-Assistent lädt Python-Pakete nur beim ausdrücklichen
 Ausführen herunter. Es werden keine Logs automatisch hochgeladen.
 
 ## Haupt-App
+
+Die Hauptansicht zeigt, für wie viele Mitglieder eine aktuelle Entity-Zuordnung
+vorliegt, und nennt ausstehende Spieler. Eine Liste mit fünf Namen bedeutet
+noch keine Zuordnung aller fünf Spieler. Auch die vollständige Zuordnung
+bestätigt nicht, dass sämtliche Schadenspakete erfasst wurden.
+
 
 - **Live:** aktueller Kampf, Schaden-/Heilungsfilter, Verlauf und Kopierfunktionen.
 - **Overlays:** Sichtbarkeit, Design-Anpassung und Fixieren der Positionen.
@@ -228,7 +286,56 @@ Eine andere Event-Zeitzone lädt keinen neuen regionalen Event-Kalender.
 Regionale Zeitzonen berücksichtigen die Sommerzeit über Qt automatisch;
 UTC bleibt unverändert.
 
-Die vollständige Gruppen-/Raid-Liveprüfung nach dem Patch steht noch aus.
-Darstellungs- und Zeitzonentests bestätigen keine Kompatibilität mit einem
-geänderten Spielprotokoll. Ein echter Wipe mit anschließendem Leave/Rejoin
-bleibt bis zu einem entsprechenden Live-Test offen.
+Wipes und Spielerwechsel in Dungeons wurden im wiederholten Live-Einsatz als
+funktionierend zurückgemeldet. Der späte Start bleibt eingeschränkt: Eine
+empfangene Namensliste ordnet noch nicht jeden Namen einer aktuellen Entity-ID zu.
+Nach einem Neustart im Kampf können daher weiterhin nur du oder einzelne
+Gruppenmitglieder gezählt werden. Die Änderung vom 22. Oktober unterstützt
+zusätzliche strukturierte Gruppenmeldungen; die fehlende Zuordnung wird damit
+nicht allgemein behoben.
+
+
+Fehlt die vollständige Mitgliederliste, können wiederholte geprüfte
+Gruppenstatusmeldungen eine **teilweise** Wiederherstellung ermöglichen,
+sobald passende vollständige Spieler-Identitätsmeldungen eintreffen.
+Ausdrückliche Mitglieder- und Austrittsmeldungen haben Vorrang. Früher fehlender
+Schaden und Spieler ohne aktuelle Identitätsmeldung werden dadurch nicht
+nachträglich ergänzt; ein Start direkt beim Boss kann weiterhin zunächst nur
+den eigenen Charakter erfassen.
+
+
+Ein begrenzter Puffer kann bereits empfangenen Schaden nachträglich einem offenen
+oder noch vorgehaltenen Kampf zuordnen, sobald eine vollständige Spielermeldung
+die genaue Identität beweist. Dafür muss beim Treffer eine ausdrückliche geprüfte
+Gruppenliste vorliegen; die Entity-Zuordnung darf sich nicht geändert haben.
+Die Grenze liegt bei 10.000 Ereignissen und zehn Minuten. Treffer vor Kampfbeginn,
+fehlende Pakete und nie eintreffende Identitäten werden nicht rekonstruiert.
+Die teilweise Wiederherstellung allein über Statusmeldungen reicht dafür nicht.
+Ergänzte Berichte bleiben als unvollständig markiert. Änderungen erfordern einen
+Neustart des Meters.
+
+
+Nicht zugeordnete Angreifer an einem bereits erfassten Kampfziel erscheinen im
+Hauptfenster separat als **Spieler ? · Entity-ID**, mit beobachtetem Schaden und
+Heilung. Passende Identitätsmeldungen ergänzen später den Namen. Bis ein genauer
+Gruppenbeleg die Übernahme erlaubt, bleiben diese Werte außerhalb der bestätigten
+Gruppensumme, Prozentanteile und Chat-Exporte. Die Sammlung ist auf 20.000
+Ereignisse begrenzt; bekannte NPCs/Begleiter und fremde Kampfziele sind ausgeschlossen.
+Die Overlay-Rangliste zeigt weiterhin bestätigte Mitglieder. Eine Heilung allein
+belegt keine Gruppenzugehörigkeit.
+
+
+Die lokale Klassifikation enthält die vollständige berücksichtigte Tabelle
+exakter DoT-IDs. Periodische Heilung mit zwei Zahlenfeldern verwendet die erste
+geprüfte Menge; das zweite Feld wird nicht addiert. Bereits aktive Bufflisten
+in Spieler-, Eigen- und Spawnmeldungen werden ebenfalls erfasst. Uptime beginnt
+bei der Beobachtung; zeitlich begrenzte Effekte benötigen eine Zeitbasis.
+Fehlende genaue Effektnamen und unbestätigte Formate bleiben ausdrücklich offen.
+
+## Lizenz und Signierung
+
+Projektcode: [GPL-3.0-only](LICENSE). Drittanbieter- und Spieldatenhinweise
+bleiben in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) erhalten.
+
+[Code signing policy](docs/CODE-SIGNING.md) · [Signierung einrichten](docs/SIGNING.de.md).
+SignPath-Freigabe und Signierung stehen noch aus; vorhandene lokale Windows-Pakete sind unsigniert.

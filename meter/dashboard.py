@@ -132,7 +132,8 @@ class LiveDashboard(QMainWindow):
         for filename in ('segoeui.ttf','consola.ttf'):
             font=Path(os.environ.get('WINDIR',r'C:\Windows'))/'Fonts'/filename
             if font.is_file():QFontDatabase.addApplicationFont(str(font))
-        self.setWindowTitle(_tr('AION 2 · Live DPS'))
+        from . import __version__
+        self.setWindowTitle(_tr('AION 2 · Live DPS')+' · '+__version__)
         self.resize(550,500);self.setMinimumSize(470,420)
         self.data_dir=Path(data_dir) if data_dir else runtime_directory(BASE)
         self.preferences=Preferences(self.data_dir);self.settings=self.preferences.values;self.preferences.save()
@@ -170,6 +171,7 @@ class LiveDashboard(QMainWindow):
         top=QHBoxLayout();branding=QVBoxLayout();title=QLabel('AION 2');title.setObjectName('title');branding.addWidget(title)
         subtitle=QLabel(t('Combat overview','Kampfübersicht'));subtitle.setObjectName('muted');branding.addWidget(subtitle);top.addLayout(branding);top.addStretch()
         self.live_badge=QLabel('LIVE');self.live_badge.setObjectName('badge');top.addWidget(self.live_badge,0,Qt.AlignmentFlag.AlignVCenter)
+        self.update_button=QPushButton(t('Updates','Updates'));self.update_button.clicked.connect(self.show_updates);top.addWidget(self.update_button)
         setup=QPushButton(t('Settings','Einstellungen'));setup.setToolTip(_tr('Farben, Overlay und Logspeicher'));setup.clicked.connect(self.configure);top.addWidget(setup);layout.addLayout(top)
         connection=QHBoxLayout();self.status=QLabel(_tr('Verbindet automatisch mit AION 2 …'));self.status.setWordWrap(True);connection.addWidget(self.status,1)
         self.capture_button=QPushButton(_tr('Live pausieren'));self.capture_button.clicked.connect(self.toggle_capture);connection.addWidget(self.capture_button);layout.addLayout(connection)
@@ -187,6 +189,8 @@ class LiveDashboard(QMainWindow):
         for key in ('all','boss','trash','unknown'):self.scope_choice.addItem(scope_label(key),key)
         self.scope_choice.setCurrentIndex(max(0,self.scope_choice.findData(self.settings['dungeon_scope'])));scope_layout.addWidget(self.scope_choice,1);self.scope_choice.currentIndexChanged.connect(self.change_dungeon_scope);live_layout.addWidget(self.scope_controls);self.scope_controls.hide()
         self.view=DamageView();self.view.setMinimumHeight(230);self.view.actorClicked.connect(self.show_actor_details);live_layout.addWidget(self.view,1)
+        self.unassigned_box=QGroupBox(t('Unassigned entities · group membership unconfirmed','Nicht zugeordnete Entities · Gruppenzugehörigkeit unbestätigt'));unassigned_layout=QVBoxLayout(self.unassigned_box)
+        self.unassigned_label=QLabel();self.unassigned_label.setTextFormat(Qt.TextFormat.PlainText);self.unassigned_label.setWordWrap(True);self.unassigned_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse);unassigned_layout.addWidget(self.unassigned_label);live_layout.addWidget(self.unassigned_box);self.unassigned_box.hide()
         self.group_status=QLabel('');self.group_status.setWordWrap(True);self.group_status.setObjectName('muted');live_layout.addWidget(self.group_status)
         actions=QGridLayout();actions.setHorizontalSpacing(10);actions.setVerticalSpacing(8)
         new=QPushButton(_tr('Neuer Kampf'));new.clicked.connect(self.reset_fight);actions.addWidget(new,0,0)
@@ -229,8 +233,17 @@ class LiveDashboard(QMainWindow):
             point=self.overlay.visible_position(position,self.size());self.move(point)
         self.apply_overlay_settings();self.update_storage_status()
         if auto_start:QTimer.singleShot(0,self.start_live)
+    def show_updates(self):
+        from .update_dialog import UpdateDialog
+        dialog=getattr(self,'update_dialog',None)
+        if dialog is None:
+            dialog=UpdateDialog(self.data_dir,self.settings,self.preferences,self);self.update_dialog=dialog
+            dialog.destroyed.connect(lambda:setattr(self,'update_dialog',None))
+        dialog.show();dialog.raise_();dialog.activateWindow()
     def display_report(self):
         report=self.latest if not self.display_floor else {**self.latest,'fights':[f for f in self.latest.get('fights',[]) if f['id']>self.display_floor]}
+        from .personal_boss import personal_report
+        report=personal_report(report)
         scope=self.settings.get('dungeon_scope','all');fights=report.get('fights',[])
         if scope=='all' or not fights or not fights[-1].get('dungeon_name'):return report
         cache=getattr(self,'_scope_input',None)
@@ -412,6 +425,16 @@ class LiveDashboard(QMainWindow):
         prefix=(name+' · ') if name else ''
         messages={'missing':_tr('Warte auf eine frische Gruppenmeldung · ggf. Gebiet wechseln oder bei laufendem Meter neu beitreten.'), 'invalid':_tr('Gruppendaten unvollständig · Mitglieder werden noch nicht gezählt.'), 'partial':_tr('{0} Mitglieder erkannt · Vollständigkeit der Gruppen-/Raidliste unbestätigt.' ,len(self.latest.get('roster', []))), 'solo':_tr('Keine Gruppe gemeldet.')}
         self.group_status.setText(prefix+messages.get(state,_tr('Gruppen-/Raidliste: {0} Mitglieder' ,len(self.latest.get('roster', [])))))
+        identity=self.latest.get('group_identity',{})
+        if identity.get('trusted') and identity.get('total') and identity.get('resolved',0)<identity['total']:
+            missing=identity.get('pending_names',[])+identity.get('ambiguous_names',[])
+            shown=', '.join(missing[:3])+(' …' if len(missing)>3 else '')
+            self.group_status.setText(prefix+_tr('{0} von {1} Spielern zugeordnet · ausstehend: {2}',identity.get('resolved',0),identity['total'],shown))
+        fight_roster=self.display_report().get('fights',[])
+        roster=fight_roster[-1].get('group_roster',[]) if fight_roster else []
+        unseen=[r['name'] for r in roster if not r.get('combat_events_observed')]
+        self.group_status.setToolTip(_tr('Keine Kampfereignisse erfasst: {0}',', '.join(unseen)) if unseen else '')
+        if unseen:self.group_status.setText(self.group_status.text()+_tr(' · {0} ohne erfasste Kampfereignisse',len(unseen)))
         self.identity_button.setVisible(self.settings.get('manual_identity',False) and self.latest.get('self_id') is None)
         from .metrics import metric_report,METRICS
         mode=self.settings.get('display_metric','damage');unit=METRICS[mode];rate='DPS' if mode=='damage' else 'HPS'
@@ -429,12 +452,26 @@ class LiveDashboard(QMainWindow):
         if self.latest.get('self_id') is not None and not own.get('name') and (not fight or (not fight.get('partial') and fight.get('integrity','ok')=='ok')):
             self.notice.setText(_tr('Eigener Spieler erkannt – warte auf die Namensmeldung.'))
         if self.latest.get('coverage_incomplete') and (not fight or fight.get('integrity','ok')=='ok'):
-            self.notice.setText(_tr('Auswertung noch unvollständig: nicht alle Effekte/Begleiter sind zugeordnet.'))
+            from .quality import coverage_notice
+            self.notice.setText(coverage_notice(fight or {}))
         if fight and fight.get('integrity','ok')=='ok' and fight.get('damage_coverage')=='sparse_worldboss_amounts':
             self.notice.setText(_tr('Worldboss: Schadensbeträge vieler Spieler fehlen offenbar. Raid-DPS/Anteile sind unvollständig.'))
-        elif fight and fight.get('boss_type')=='world_boss' and fight.get('integrity','ok')=='ok':self.notice.setText(_tr('Worldboss: nur erfasste Gruppe/Raid · keine Gesamtwertung aller Angreifer.'))
+        elif fight and fight.get('tracking_scope')!='self' and fight.get('boss_type')=='world_boss' and fight.get('integrity','ok')=='ok':self.notice.setText(_tr('Worldboss: nur erfasste Gruppe/Raid · keine Gesamtwertung aller Angreifer.'))
+        from .observation_quality import missing_damage_actors
+        if fight and fight.get('integrity','ok')=='ok' and missing_damage_actors(fight):
+            self.notice.setText(_tr('{0} Spieler ohne erfassten Schadensbetrag · Beitrag unbekannt; keine bestätigte 0.',len(missing_damage_actors(fight))))
+        from .observation_quality import sparse_damage_coverage
+        if fight and fight.get('integrity','ok')=='ok' and sparse_damage_coverage(fight):
+            self.notice.setText(_tr('Direkte Schadensbeträge vieler Spieler fehlen; DPS und Anteile sind unvollständig.'))
         if mode!='damage' and (not fight or fight.get('integrity','ok')=='ok'):self.notice.setText(_tr('Beobachtete Heilung im erfassten Kampf · keine bestätigte effektive Heilung/Überheilung.')+(_tr(' Teilausschnitt.') if fight and fight.get('partial') else '')+(_tr(' Ältere Logs enthalten keine sichere Selbst-/Fremdaufteilung.') if fight and fight.get('healing_legacy') else ''))
+        if fight and fight.get('tracking_scope')=='self':
+            self.group_status.setText(_tr('World-/Abyssboss · nur eigener Spieler'));self.group_status.setToolTip('')
+            if fight.get('integrity','ok')=='ok' and not fight.get('partial') and not fight.get('coverage_incomplete'):
+                self.notice.setText(_tr('World-/Abyssboss · nur eigener Spieler'))
         for view in (self.view,self.overlay.view,self.graph_overlay.view):view.set_data(self.display_report(),self.settings)
+        from .unassigned_view import observation_text
+        observed=observation_text(self.display_report())
+        self.unassigned_box.setVisible(bool(observed));self.unassigned_label.setText(observed)
         if fight and fight.get('scope_note'):self.notice.setText(fight['scope_note'])
         for dialog in list(self.details):dialog.set_report(self.display_report() if self.settings.get('dungeon_scope','all')!='all' else self.latest)
         self.update_storage_status()

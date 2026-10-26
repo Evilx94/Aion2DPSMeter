@@ -97,6 +97,8 @@ def roster(payload):
     return tuple(rows)
 
 
+STATUS_IDENTITY_OPS=frozenset(bytes.fromhex(op) for op in ('1c92','4536','4436','4a36','3336','0092','0296','0297','0d92','0a96','4136'))
+
 class Parser:
     def __init__(self,ledger,skill_policy=None,npc_policy=None):
         from .npc_policy import NpcPolicy
@@ -106,6 +108,10 @@ class Parser:
         from collections import Counter
         self.ledger=ledger;self.counts=Counter();self.decisions=Counter();self.errors=Counter();self.map_id=None;self.map_token=None;self.zone_sequence=0
         self.login_membership=None;self.deferred_login=None
+        from .party_status import StatusRecovery
+        self.status_recovery=StatusRecovery();self.listed_activity=()
+        from .party_status import RaidStatusRecovery
+        self.raid_status_recovery=RaidStatusRecovery()
     def reset_location(self):
         self.map_id=None;self.map_token=None;self.ledger.set_location(None)
     def login_identity(self,rows,time):
@@ -128,6 +134,32 @@ class Parser:
         return world.people.get(world.self_entity)
 
     def accept(self,message,time=None):
+        world=self.ledger.world
+        raid_expired=self.raid_status_recovery.sync(world,time)
+        if raid_expired:self.raid_status_recovery.refresh(world,time)
+        expired=self.status_recovery.sync(world,time)
+        if expired and world.party_source=='status_recovery':self.status_recovery.refresh(world,time)
+        result=self._accept(message,time)
+        self.listed_activity=()
+        if time is not None and message.opcode in (bytes.fromhex('4136'),bytes.fromhex('4536'),bytes.fromhex('3336')):
+            from .listed_buffs import listed_buffs
+            listed=listed_buffs(message.opcode,message.body)
+            if listed:
+                self.ledger.sync_activity();revision=self.ledger.buffs.revision
+                self.ledger.buffs.listed(listed,time);self.listed_activity=listed
+                if world.authorized(listed[0].entity) and revision!=self.ledger.buffs.revision:self.ledger.activity_revision+=1
+                self.decisions['buff:listed']+=len(listed)
+        relevant=message.opcode in STATUS_IDENTITY_OPS or message.opcode in (bytes.fromhex('2b96'),bytes.fromhex('2c96'))
+        if relevant:self.raid_status_recovery.refresh(world,time)
+        if relevant and (self.status_recovery.rows or world.party_source=='status_recovery'):
+            self.status_recovery.refresh(world,time)
+        if relevant and message.opcode not in (bytes.fromhex('1c92'),bytes.fromhex('4a36'),bytes.fromhex('4136')):
+            self.ledger.deferred_damage.reconcile(time)
+        if world.party_source in ('status_recovery','raid_status_recovery') and self.ledger.active:
+            self.ledger.fight_group_state='partial';self.ledger.fight_partial=True
+        return result
+
+    def _accept(self,message,time=None):
         op=message.opcode;body=message.body;world=self.ledger.world
         deferred=self.deferred_login
         if deferred:
@@ -142,6 +174,28 @@ class Parser:
                     self.accept(pending,time)
         self.counts[op.hex(' ')]+=1
         try:
+            if op in (bytes.fromhex('1392'),bytes.fromhex('1d97')):
+                # Exact explicit leave records documented by the reference.
+                # Unknown variants never revoke or create membership.
+                if body!=bytes(2):raise InvalidData('unconfirmed party leave record')
+                self.ledger.finish('party_left')
+                self.login_membership=None;self.deferred_login=None
+                world.party((),source='server_leave')
+                self.decisions['login_group:left']+=1
+                return ()
+            if op==bytes.fromhex('2b96'):
+                from .party_status import raid_actor_status
+                entity=raid_actor_status(body)
+                self.raid_status_recovery.observe_actor(world,entity,time)
+                self.decisions['raid_actor_status:observed']+=1
+                return entity
+            if op in (bytes.fromhex('1c92'),bytes.fromhex('2c96')):
+                from .party_status import status_record
+                record=status_record(body,raid=op==bytes.fromhex('2c96'))
+                recovery=self.raid_status_recovery if op==bytes.fromhex('2c96') else self.status_recovery
+                recovery.observe(world,record,time)
+                self.decisions['raid_status:observed' if op==bytes.fromhex('2c96') else 'party_status:observed']+=1
+                return record
             if op in (bytes.fromhex('0092'),bytes.fromhex('0296'),bytes.fromhex('0d92'),bytes.fromhex('0a96')):
                 from .login_group import snapshot,update,LoginMembership,PartialOwnGroup
                 if self.login_membership and self.login_membership.generation!=world.generation:self.login_membership=None
@@ -161,7 +215,11 @@ class Parser:
                         # Unkeyed party updates belong to the local player's
                         # subgroup, which need not be serialized first.
                         record=replace(record,own_group=own_row['login_group_key'])
-                    self.login_membership=LoginMembership(record,world.generation)
+                    previous=self.login_membership
+                    if previous and previous.snapshot.raid and not record.raid and record.key==previous.snapshot.own_group:
+                        self.login_membership=previous.replace_own_group(record)
+                        self.decisions['login_group:raid_subgroup_snapshot']+=1
+                    else:self.login_membership=LoginMembership(record,world.generation)
                 else:
                     key,row=update(op,body)
                     if not self.login_membership:
@@ -185,7 +243,10 @@ class Parser:
                     record=row
                 pending=self.login_membership
                 members=tuple(pending.rows.values())
-                for row in members:
+                # Only this message's explicit live IDs are fresh identity
+                # evidence. Retained subgroup membership must not resurrect a
+                # despawned/reused entity from an older roster row.
+                for row in (record.rows if hasattr(record,'rows') else (record,)):
                     if row['id']==0:continue
                     world.identity(row['id'],row['name'],row['server'],class_name=row['class'])
                     self.ledger.refresh_identity(row['id'])
@@ -216,6 +277,11 @@ class Parser:
                 record=cast_record(body)
                 if time is not None:self.ledger.cast(time,record)
                 self.decisions['cast:observed']+=1;return record
+            if op==bytes.fromhex('0338'):
+                from .hit_notice import hit_notice
+                record=hit_notice(body)
+                if time is not None:self.ledger.hit_notice(time,record)
+                self.decisions['hit_notice:observed']+=1;return record
             if op in (bytes.fromhex('2a38'),bytes.fromhex('2b38'),bytes.fromhex('2c38')):
                 from .activity import buff_record
                 record=buff_record(op,body)
@@ -284,7 +350,11 @@ class Parser:
                 map_id=int.from_bytes(body[4:8],'little')
                 token=(int.from_bytes(body[:4],'little'),map_id)
                 if map_id!=self.map_id:
-                    self.ledger.finish('zone_change');world.zone_reset();self.map_id=map_id
+                    self.ledger.finish('zone_change')
+                    previous=self.login_membership
+                    carry=previous and previous.snapshot.raid and previous.generation==world.generation and world.party_trusted
+                    world.zone_reset();self.map_id=map_id
+                    self.login_membership=previous.rebase_zone(world.generation) if carry else None
                     self.zone_sequence+=1;self.ledger.set_location(map_id,self.zone_sequence,token[0])
                 elif token!=self.map_token:
                     # A same-map reload/teleport does not prove a new instance.

@@ -15,6 +15,15 @@ def merchant_event():
                 enabled=True,source='https://talentbuilds.com/aion2/blackcloudmerchant',
                 checked='2026-10-19',status='community')
 
+def reset_events():
+    # Global resets are fixed UTC, unlike the editable regional event clock.
+    # Daily 07:00 UTC is also confirmed by the user's 25 October reset at 08:00 CET.
+    return [dict(id=key,name=name,category='Sonstiges',times=['07:00'],days=days,
+                 minutes=0,enabled=True,timezone='UTC',source=SOURCE,
+                 checked='2026-10-25',status='community')
+            for key,name,days in [('daily_reset','Daily Reset',list(range(7))),
+                                  ('weekly_reset','Weekly Reset',[2])]]
+
 def defaults():
     def event(key,name,category,times,days=range(7),minutes=0):
         return dict(id=key,name=name,category=category,times=times,days=list(days),minutes=minutes,
@@ -28,7 +37,7 @@ def defaults():
           event('nahma','Guardian Lord Nahma','Boss',['21:00'],[4,6],30)]
     for key,label,hour,minutes in [('arena_day','Arena of Tactics · tagsüber','11:00',180),('arena_evening','Arena of Tactics · abends','19:00',120)]:
         r=event(key,label,'PvP',[hour],minutes=minutes);r['source']='https://aion2data.com/timers';rows.append(r)
-    rows.append(merchant_event())
+    rows.append(merchant_event());rows.extend(reset_events())
     from .language import migrate_event_names
     return migrate_event_names(rows)
 
@@ -48,6 +57,11 @@ def validate(rows,language='en'):
         if type(row.get('minutes')) is not int or not 0<=row['minutes']<=1440:raise ValueError(t('Window: 0 to 1440 minutes.','Zeitfenster: 0 bis 1440 Minuten.'))
         if type(row.get('enabled')) is not bool:raise ValueError(t('Invalid enabled state.','Ungültige Aktivierung.'))
         if row['enabled'] and not times:raise ValueError(name+t(': enter at least one start time.',': mindestens eine Startzeit eintragen.'))
+        zone=row.get('timezone','')
+        if zone:
+            from .clock_zones import valid_zone
+            if not isinstance(zone,str) or not valid_zone(zone):raise ValueError(t('Invalid event time zone.','Ungültige Event-Zeitzone.'))
+        elif not isinstance(zone,str):raise ValueError(t('Invalid event time zone.','Ungültige Event-Zeitzone.'))
         ids.add(key);clean=deepcopy(row);clean.update(name=name.strip(),times=sorted(set(times)),days=sorted(set(days)))
         result.append(clean)
     return result
@@ -57,23 +71,27 @@ def schedule(rows,now,zone_id='Europe/Berlin'):
     now=int(now)
     zone=QTimeZone(zone_id.encode('ascii'))
     if not zone.isValid():raise ValueError('Unbekannte Zeitzone.')
-    today=QDateTime.fromSecsSinceEpoch(int(now),zone).date();result=[]
+    result=[]
     for row in validate(without_irregular_bosses(rows)):
         if not row['enabled']:continue
+        from .clock_zones import timezone as qt_timezone
+        event_zone=qt_timezone(row.get('timezone') or zone_id)
+        if not event_zone.isValid():raise ValueError('Unbekannte Event-Zeitzone.')
+        today=QDateTime.fromSecsSinceEpoch(now,event_zone).date()
         candidates=[]
         for offset in range(0,9):
             day=today.addDays(offset)
             if day.dayOfWeek()-1 not in row['days']:continue
             for value in row['times']:
                 time=QTime.fromString(value,'HH:mm')
-                dt=QDateTime(day,time,zone,QDateTime.TransitionResolution.PreferBefore)
+                dt=QDateTime(day,time,event_zone,QDateTime.TransitionResolution.PreferBefore)
                 # A skipped spring wall-clock time is not a scheduled 03:00 event.
                 if not dt.isValid() or dt.date()!=day or dt.time()!=time:continue
                 start=dt.toSecsSinceEpoch();end=start+row['minutes']*60
                 if start>=now:candidates.append((start,end))
         if not candidates:continue
         start,end=min(candidates)
-        result.append({**row,'start':start,'end':end,'active':False,'remaining':start-now})
+        result.append({**row,'schedule_timezone':bytes(event_zone.id()).decode('utf-8'),'start':start,'end':end,'active':False,'remaining':start-now})
     return sorted(result,key=lambda r:(r['start'],r['name']))
 
 def countdown(seconds):

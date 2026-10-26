@@ -9,7 +9,8 @@ def main():
     directory=runtime_directory();preferences=Preferences(directory)
     diagnostics.set_enabled(preferences.values['save_debug'],directory)
     from PySide6.QtCore import QTimer
-    app=QApplication(sys.argv[:1]);watchdog=diagnostics.GuiWatchdog()
+    from . import __version__
+    app=QApplication(sys.argv[:1]);app.setApplicationName('Aion2Meter');app.setApplicationVersion(__version__);watchdog=diagnostics.GuiWatchdog()
     heartbeat=QTimer(app);heartbeat.setInterval(250);heartbeat.timeout.connect(watchdog.beat);heartbeat.start()
     app.aboutToQuit.connect(watchdog.stop.set)
     window=LiveDashboard(data_dir=directory);window.show()

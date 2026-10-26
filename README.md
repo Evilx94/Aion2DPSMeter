@@ -1,8 +1,42 @@
-# Aion2Meter · 0.1.0 Beta
+# Aion2Meter · 1.0.0
 
 **English** | [Deutsch](README.de.md)
 
 A Windows live DPS/healing meter for AION 2. English and German UI.
+
+
+## New in 1.0
+
+[All changes](CHANGELOG.md) · [Deutsch](CHANGELOG.de.md)
+
+UTC resets and regional event times are separate: daily/weekly resets stay at
+07:00 UTC (Berlin: 08:00 CET / 09:00 CEST). In **Clock settings → Events**, each
+event can override its time zone; an empty field inherits the schedule zone.
+Other regional events are not shifted merely because the daily reset moved.
+
+To update, close the old meter, extract this ZIP into a new folder and start
+there. Existing LocalAppData settings and logs are retained. Run
+`Setup-Meter.cmd` first if dependencies are missing.
+
+
+## Updates
+
+Use **Updates → Check for updates** in the main window. The meter contacts only
+the public releases of `Evilx94/Aion2DPSMeter` when you request a check. Beta
+releases can be included or excluded; older published versions are not offered
+as a downgrade. No login, automatic startup check or upload of logs/settings.
+
+When a newer matching package is available, **Download and verify** checks its
+SHA-256 (GitHub asset digest or attached `.zip.sha256`), file manifest and ZIP
+paths, then prepares it under LocalAppData/Aion2Meter/updates. A checksum does
+not replace trust in the repository/release owner. Missing or invalid checksums
+disable the integrated download; the GitHub release page remains accessible.
+
+**Open prepared update** opens the verified folder. Close the meter before
+switching to the new source folder; run Setup-Meter.cmd there if needed and
+keep the old folder as a backup. Current program files, settings, logs and
+Python are not automatically replaced. Automatic application replacement is not included in 1.0; the update screen
+provides manual checking and verified package preparation.
 
 ## Features
 
@@ -13,7 +47,7 @@ event clock with fixed schedules and simultaneous events; pet checklist.
 
 ## Installation (Windows)
 
-This beta is a Python source package, not a standalone executable. Setup is
+This ZIP is the Python source edition. A separate Windows ZIP contains Aion2Meter.exe and its runtime. Setup is
 needed once; subsequent starts use `Start-Meter.cmd`. The meter does not install
 anything at startup. Run `Setup-Meter.cmd` explicitly to set up its packages. Keep the complete extracted folder together.
 
@@ -104,7 +138,7 @@ Event schedules are editable and default to Europe/Berlin (CET/CEST).
 | `No module named scapy` or `PySide6` | Repeat step 4 in the extracted folder. Use its `.venv\Scripts\python.exe` so packages go into the correct environment. |
 | The app closes or nothing appears | Open PowerShell in the meter folder and run `.\.venv\Scripts\python.exe -m meter` to see the error. |
 | Capture is unavailable / access denied | Check Npcap installation and any requested restart or administrator access. See the [Npcap user guide](https://npcap.com/guide/npcap-users-guide.html). |
-| Only your character is listed | The meter may still be waiting for a fresh party/raid update. A party or area transition can supply one; earlier membership cannot always be recovered. |
+| Only your character is listed | A fresh member list and live player identities are both needed. Names may already be known while entity IDs are still missing. A group/area transition can supply new records; restarting during a fight may show only self or some members. |
 | An attached overlay disappears outside AION 2 | Expected behavior: disable attachment in Settings to keep that overlay free-floating. |
 
 Preferences, combat logs and optional recordings are stored under
@@ -125,9 +159,22 @@ See [catalogs](docs/CATALOG.md), [provenance](docs/PROVENANCE.md),
 [third-party notices](THIRD-PARTY-NOTICES.md) and [license status](LICENSE-STATUS.md).
 Original reference notices and license text are under `licenses`.
 
-## Beta limits
+## Known limits
 
-Worldboss/Open World and late-start party recognition can be incomplete.
+World and Abyss bosses show only your own observed damage/DPS, including
+attributed pets and periodic damage. Other players' direct amounts are not
+reliably available there, so no party/raid ranking or damage-share percentage
+is shown. Dungeon and ordinary group combat retain party evaluation.
+The recorded encounter duration remains the DPS denominator. Historical
+aggregate curves are hidden when no separate personal timeline is available.
+Late-start party recognition can still be incomplete.
+During late starts, observed unidentified damage sources can appear in the
+dungeon/PvE bars as `Sorcerer · Entity 1234 · ?`, with their observed damage/DPS.
+The `?` marks unconfirmed group membership. These rows do not change confirmed
+group totals, the group graph or chat exports; percentage shares are hidden
+while such rows are displayed. Exact later identity evidence replaces the
+class placeholder with the name. Same-class players remain separate entities.
+
 Capture gaps and partial encounters are flagged. Some skill variants, buffs
 and maps remain unnamed; numerical derivations are not exact confirmations.
 Buff uptime starts at observed lifecycle messages. Casts can include automatic
@@ -153,6 +200,12 @@ is not reconstructed from nearby damage or an older party list.
 
 
 ## Main application
+
+The main view reports how many roster members have a current live entity
+assignment and lists pending names. A received five-name roster is distinct
+from five players with assigned identities. The count does not certify that
+all their damage packets were captured.
+
 
 **Live** focuses on the current encounter, damage/healing filters, encounter
 history and sharing. **Overlays** groups visibility, customization and position
@@ -194,5 +247,48 @@ a different schedule zone only when those editable hours should use that zone;
 this does not download or infer a different region's event calendar. Regional
 zones use Qt's daylight-saving rules automatically; UTC stays fixed.
 
-The post-patch party/raid live test is still outstanding. Appearance/timezone
-checks do not establish compatibility with a new game protocol patch.
+Dungeon wipes and player exchanges have been reported successful in repeated
+live use. Late start remains limited: a received member-name list alone does
+not map every name to a live entity ID, and a mid-fight restart can still count
+only self or part of the group. The 22 October update supports additional
+structured party snapshots; it does not claim to solve that missing mapping.
+
+
+When no full member list was captured, repeated validated party-status messages
+can recover a **partial** group once matching full player identity records
+arrive. Explicit membership/leave records take priority. This does not recover
+earlier missed damage or players whose live identity never arrives; a boss-start
+capture can still be self-only until those records are sent.
+
+
+A bounded late-identity buffer can add previously received damage to an open
+or retained fight when a later full player record proves the exact identity.
+It requires an explicit trusted roster at hit time and unchanged entity
+lifecycles. The buffer is limited to 10,000 events and ten minutes; it does not
+recover pre-fight hits, missing packets or identities that never arrive.
+Partial-status recovery alone does not enable this historical reconciliation.
+Reconciled reports remain marked partial. Restart the meter to load updates.
+
+
+Unassigned attackers at an already observed fight target can appear separately
+in the main window as **Player ? · Entity ID**, with observed damage/healing.
+Names update when matching identity metadata arrives. These observations are
+excluded from confirmed group totals, shares and chat exports until the exact
+group proof permits a transfer. The collector is bounded to 20,000 events;
+known NPCs/summons and unrelated targets are excluded. The overlay ranking
+continues to show confirmed members. A heal alone does not establish membership.
+
+
+The local periodic policy includes the full credited exact DoT table. Two-value
+periodic healing uses the validated first amount; the second field is not added.
+Already-active buff lists in player/self/spawn records are also observed. Uptime
+starts at observation and timed effects require a server-clock anchor. Missing
+exact effect names and unsupported records remain explicitly unresolved.
+
+## License and signing
+
+Project code: [GPL-3.0-only](LICENSE). Third-party notices and game-data
+attributions remain in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
+
+[Code signing policy](docs/CODE-SIGNING.md) · [Signing setup (German)](docs/SIGNING.de.md).
+Signing is pending SignPath approval; existing local Windows packages are unsigned.

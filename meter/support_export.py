@@ -14,6 +14,7 @@ def redactor(report):
     names=set()
     for f in report.get('fights',[]):
         names.update(a.get('name') for a in f.get('actors',[]) if a.get('name'))
+        names.update(a.get('name') for a in f.get('unassigned_actors',[]) if a.get('name'))
         if f.get('self_identity',{}).get('name'):names.add(f['self_identity']['name'])
     if report.get('self_identity',{}).get('name'):names.add(report['self_identity']['name'])
     aliases={name:_tr('<Spieler {0}>' ,i) for i,name in enumerate(sorted(names),1)}
@@ -50,8 +51,11 @@ def build_bundle(report,settings,sections=('counters','settings'),log_directory=
     overview['source_sha256']={name:hashlib.sha256((base/name).read_bytes()).hexdigest() for name in ('core/parser.py','core/combat.py','core/transport.py','quality.py','support_export.py') if (base/name).is_file()};files['overview.json']=encoded(overview)
     if 'settings' in sections:files['settings.json']=redact(encoded({k:settings[k] for k in SAFE_SETTINGS if k in settings}).decode('utf-8')).encode('utf-8')
     if 'counters' in sections:
-        fields=('network','transport','framing','parser_errors','decisions','group_state','party_trusted','coverage_incomplete')
-        counters={k:report[k] for k in fields if k in report};files['counters.json']=redact(encoded(counters).decode('utf-8')).encode('utf-8')
+        fields=('network','transport','framing','parser_errors','decisions','group_state','party_trusted','coverage_incomplete','group_membership_source')
+        counters={k:report[k] for k in fields if k in report}
+        if isinstance(report.get('group_identity'),dict):
+            counters['group_identity']={k:report['group_identity'][k] for k in ('total','resolved','pending','ambiguous','trusted') if k in report['group_identity']}
+        files['counters.json']=redact(encoded(counters).decode('utf-8')).encode('utf-8')
     if 'fight' in sections and report.get('fights'):files['fight.json']=encoded(fight_summary(report['fights'][-1],redact))
     if 'errors' in sections and log_directory:
         root=Path(log_directory).resolve()

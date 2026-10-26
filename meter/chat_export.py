@@ -30,9 +30,12 @@ def dungeon_reports(reports,selected):
     return sorted(unique.values(),key=lambda r:(r['fights'][-1].get('start_ms',0),str(r['fights'][-1].get('id'))))
 
 def fight_lines(report):
+    from .personal_boss import personal_report
+    report=personal_report(report)
     fight=report['fights'][-1]
     title=clean(fight.get('boss_name') or fight.get('target_name') or _tr('Kampf'))
     lines=[title]
+    if fight.get('tracking_scope')=='self':lines.append(_tr('World-/Abyssboss · nur eigener Spieler'))
     if fight.get('scope_note'):lines.append(fight['scope_note'])
     if fight.get('manual_outcome') or fight.get('reason')=='target_reset':
         from .encounter_history import outcome
@@ -53,11 +56,23 @@ def fight_lines(report):
     elif fight.get('reason')=='active':lines.append(_tr('Laufender Kampf – Zwischenstand'))
     if fight.get('group_coverage_confirmed') is False:
         lines.append(_tr('Gruppen-/Raidliste fehlt oder ist unvollständig · Anteile beziehen sich nur auf erfasste Spieler.'))
-    if fight.get('damage_coverage')=='sparse_worldboss_amounts':
-        lines.append(_tr('Worldboss: Schadensbeträge vieler Spieler fehlen offenbar · Anteile nur am erfassten Schaden.'))
-    elif fight.get('boss_type')=='world_boss':lines.append(_tr('Worldboss: Werte der erfassten Gruppe/des Raids, keine Gesamtwertung aller Angreifer.'))
+    from .observation_quality import sparse_damage_coverage
+    if sparse_damage_coverage(fight):
+        lines.append(_tr('Direkte Schadensbeträge vieler Spieler fehlen; DPS und Anteile sind unvollständig.'))
+    elif fight.get('tracking_scope')!='self' and fight.get('boss_type')=='world_boss':lines.append(_tr('Worldboss: Werte der erfassten Gruppe/des Raids, keine Gesamtwertung aller Angreifer.'))
+    from .observation_quality import damage_amount_missing
     for actor in sorted(actors,key=lambda a:(-a['damage'],str(a.get('id')))):
         name=clean(actor_label(actor,fight,report))
+        if fight.get('tracking_scope')=='self':
+            lines.append(_tr('{0}: {1} Schaden · {2} DPS',name,number(actor['damage']),number(actor.get('dps'))))
+            continue
+        if damage_amount_missing(actor,fight):
+            lines.append(_tr('{0}: kein Schadensbetrag erfasst · Beitrag unbekannt',name))
+            continue
+        if sparse_damage_coverage(fight):
+            stats=equipment_text(actor,False)
+            lines.append(_tr('{0}: {1} erfasster Schaden · Anteil unbekannt',name,number(actor['damage']))+(' · '+stats if stats else ''))
+            continue
         share=decimal(f"{100*actor['damage']/total:.1f}") if total else decimal('0.0')
         stats=equipment_text(actor,False)
         lines.append(_tr('{0}: {1} Schaden · {2} %' ,name,number(actor['damage']),share)+(' · '+stats if stats else ''))
@@ -65,9 +80,11 @@ def fight_lines(report):
 
 def fight_text(report):
     if not report.get('fights'):return ''
+    from .personal_boss import personal_report
+    report=personal_report(report)
     fight=report['fights'][-1]
     area=clean(fight.get('dungeon_name') or fight.get('region_name'))
-    header='AION 2 · '+area if area else _tr('AION 2 · Gruppenschaden')
+    header='AION 2 · '+area if area else ('AION 2' if fight.get('tracking_scope')=='self' else _tr('AION 2 · Gruppenschaden'))
     return '\n'.join([header]+fight_lines(report))
 
 def healing_text(report,metric='healing'):
@@ -78,6 +95,7 @@ def healing_text(report,metric='healing'):
     lines=['AION 2 · '+clean(fight.get('dungeon_name') or fight.get('region_name') or unit),clean(fight.get('boss_name') or fight.get('target_name') or _tr('Kampf'))+' · '+unit]
     if fight.get('integrity','ok')!='ok':return '\n'.join(lines+[_tr('Auswertung nicht verlässlich – keine Heilungswerte.')])
     lines.append(_tr('Beobachtete Heilung · effektive Heilung/Überheilung unbestätigt'))
+    if fight.get('tracking_scope')=='self':lines.append(_tr('World-/Abyssboss · nur eigener Spieler'))
     total=fight.get('total_damage') or 0
     if fight.get('partial') or fight.get('coverage_incomplete'):lines.append(_tr('Teilausschnitt / unvollständige Erfassung'))
     elif fight.get('reason')=='active':lines.append(_tr('Laufender Kampf – Zwischenstand'))
@@ -86,7 +104,8 @@ def healing_text(report,metric='healing'):
     for actor in fight.get('actors',[]):
         share=100*actor['damage']/total if total else 0
         share_text=decimal(f'{share:.1f}')
-        lines.append(f"{clean(actor_label(actor,fight,report))}: {number(actor['damage'])} {unit} · {share_text} % · {number(actor['dps'])} HPS")
+        portion='' if fight.get('tracking_scope')=='self' else f' · {share_text} %'
+        lines.append(f"{clean(actor_label(actor,fight,report))}: {number(actor['damage'])} {unit}{portion} · {number(actor['dps'])} HPS")
     return '\n'.join(lines)
 
 def dungeon_text(reports,selected):

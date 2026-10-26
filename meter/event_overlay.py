@@ -97,13 +97,13 @@ class EventSettings(QDialog):
         self.opacity=QSlider(Qt.Orientation.Horizontal);self.opacity.setRange(40,100);self.opacity.setValue(settings.get('event_opacity',settings.get('opacity',88)));form.addRow(t('Clock opacity','Uhr-Deckkraft'),self.opacity)
         self.clock_zone=zone_picker(settings.get('event_timezone','Europe/Berlin'),self.language);form.addRow(t('Clock time zone','Uhr-Zeitzone'),self.clock_zone)
         self.schedule_zone=zone_picker(settings.get('event_schedule_timezone','Europe/Berlin'),self.language);form.addRow(t('Event schedule time zone','Zeitzone der Eventzeiten'),self.schedule_zone)
-        note=QLabel(t('The clock zone only changes the displayed time. Event times below use the schedule zone; keep Europe/Berlin for the existing EU schedule. Changing the schedule zone reinterprets those times. Language changes require a restart.','Die Uhr-Zeitzone ändert nur die angezeigte Uhrzeit. Die Eventzeiten gelten in der Event-Zeitzone; für den vorhandenen EU-Plan Europe/Berlin beibehalten. Eine Änderung der Event-Zeitzone interpretiert diese Zeiten neu. Sprachänderungen benötigen einen Neustart.'));note.setWordWrap(True);form.addRow(note)
+        note=QLabel(t('The clock zone only changes the display. Events use the schedule zone unless their own zone is set. Daily/weekly resets use fixed UTC; EU regional events retain the existing Europe/Berlin plan. Language changes require a restart.','Die Uhr-Zeitzone ändert nur die Anzeige. Events nutzen die Plan-Zeitzone, sofern keine eigene Zone gesetzt ist. Daily-/Weekly-Resets nutzen fest UTC; regionale EU-Events behalten den bisherigen Europe/Berlin-Plan. Sprachänderungen benötigen einen Neustart.'));note.setWordWrap(True);form.addRow(note)
         from .appearance_editor import AppearanceEditor
         self.appearance=AppearanceEditor(settings,('clock',),self.language);appearance_scroll=QScrollArea();appearance_scroll.setWidgetResizable(True);appearance_scroll.setWidget(self.appearance);tabs.addTab(appearance_scroll,t('Appearance','Darstellung'))
         self.clock_zone.currentTextChanged.connect(self.preview_zones);self.schedule_zone.currentTextChanged.connect(self.preview_zones)
         events=QWidget();events_layout=QVBoxLayout(events);tabs.addTab(events,t('Events','Events'))
-        hint=QLabel(t('Times use the event schedule time zone selected on the first tab. Days: 1=Mon to 7=Sun. Events sharing a start time appear together. Siege and scheduled Abyss bosses remain included; irregular world bosses are excluded.','Die Zeiten gelten in der Event-Zeitzone des ersten Tabs. Tage: 1=Mo bis 7=So. Events mit gleicher Startzeit erscheinen gemeinsam. Belagerung und feste Abyss-Bosszeiten bleiben enthalten; unregelmäßige Worldbosse entfallen.'));hint.setWordWrap(True);events_layout.addWidget(hint)
-        self.table=QTableWidget(0,6);self.table.setHorizontalHeaderLabels([t('On','An'),'Event',t('Type','Art'),t('Start times HH:mm','Startzeiten HH:mm'),t('Days 1–7','Tage 1–7'),t('Window min','Fenster min')]);events_layout.addWidget(self.table)
+        hint=QLabel(t('Each event can have its own time zone; an empty zone uses the schedule zone from the first tab. Reset times are entered in UTC. Days: 1=Mon to 7=Sun. Events sharing a start time appear together. Siege and scheduled Abyss bosses remain included; irregular world bosses are excluded.','Jeder Event kann eine eigene Zeitzone haben; eine leere Zone nutzt die Plan-Zeitzone des ersten Tabs. Reset-Zeiten werden in UTC eingetragen. Tage: 1=Mo bis 7=So. Events mit gleicher Startzeit erscheinen gemeinsam. Belagerung und feste Abyss-Bosszeiten bleiben enthalten; unregelmäßige Worldbosse entfallen.'));hint.setWordWrap(True);events_layout.addWidget(hint)
+        self.table=QTableWidget(0,7);self.table.setHorizontalHeaderLabels([t('On','An'),'Event',t('Type','Art'),t('Start times HH:mm','Startzeiten HH:mm'),t('Days 1–7','Tage 1–7'),t('Window min','Fenster min'),t('Time zone','Zeitzone')]);events_layout.addWidget(self.table)
         for row in self.rows:self.add_row(row)
         self.table.setColumnHidden(5,True)
         actions=QHBoxLayout();add=QPushButton(t('Add event','Event hinzufügen'));add.clicked.connect(lambda:self.add_row(dict(id=uuid.uuid4().hex,name=t('Custom event','Eigenes Event'),category='Sonstiges',times=[],days=list(range(7)),minutes=0,enabled=False,status='user',source='user')));actions.addWidget(add)
@@ -125,6 +125,10 @@ class EventSettings(QDialog):
         for category in CATEGORIES:choice.addItem(self.tr_text('Other','Sonstiges') if category=='Sonstiges' else category,category)
         choice.setCurrentIndex(CATEGORIES.index(row['category']));self.table.setCellWidget(i,2,choice)
         for col,text in [(3,', '.join(row['times'])),(4,','.join(str(d+1) for d in row['days'])),(5,str(row['minutes']))]:self.table.setItem(i,col,QTableWidgetItem(text))
+        zone=zone_picker(row.get('timezone') or 'UTC',self.language)
+        zone.insertItem(0,self.tr_text('Schedule zone','Plan-Zeitzone'),'')
+        if not row.get('timezone'):zone.setCurrentIndex(0)
+        self.table.setCellWidget(i,6,zone)
     def remove_row(self):
         i=self.table.currentRow()
         if i>=0:self.table.removeRow(i)
@@ -137,7 +141,10 @@ class EventSettings(QDialog):
             for i in range(self.table.rowCount()):
                 item=self.table.item(i,0);old=item.data(Qt.ItemDataRole.UserRole);row=deepcopy(old)
                 row.update(enabled=item.checkState()==Qt.CheckState.Checked,name=self.table.item(i,1).text().strip(),category=self.table.cellWidget(i,2).currentData(),times=[t.strip() for t in self.table.item(i,3).text().split(',') if t.strip()],days=[int(d.strip())-1 for d in self.table.item(i,4).text().split(',') if d.strip()],minutes=int(self.table.item(i,5).text()))
-                if any(row[k]!=old.get(k) for k in ('name','category','times','days','minutes')):row.update(source='user',status='user',checked=QDateTime.currentDateTimeUtc().toString('yyyy-MM-dd'))
+                selected=selected_zone(self.table.cellWidget(i,6))
+                if selected:row['timezone']=selected
+                else:row.pop('timezone',None)
+                if any(row.get(k)!=old.get(k) for k in ('name','category','times','days','minutes','timezone')):row.update(source='user',status='user',checked=QDateTime.currentDateTimeUtc().toString('yyyy-MM-dd'))
                 rows.append(row)
             self.result_rows=validate(rows,self.language)
         except (ValueError,TypeError) as exc:

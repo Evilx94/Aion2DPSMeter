@@ -1,0 +1,8 @@
+<artifact-configuration xmlns="http://signpath.io/artifact-configuration/v1">
+  <!-- upload-artifact wraps the single EXE in a ZIP. Do not sign upstream DLLs. -->
+  <zip-file>
+    <pe-file path="Aion2Meter.exe" product-name="Aion2Meter" original-filename="Aion2Meter.exe">
+      <authenticode-sign/>
+    </pe-file>
+  </zip-file>
+</artifact-configuration>
